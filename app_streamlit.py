@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import streamlit as st
 
 from lib.codegen_streamlit_lib import StreamlitLib, get_app_config
-from lib.codegen_utilities import log_debug
+# from lib.codegen_utilities import log_debug
 
 from src.codegen_schema_generator import JsonGenerator
 
@@ -60,7 +60,11 @@ def page_1():
     # Get suggested questions initial value
     with st.spinner("Loading App..."):
         if "suggestion" not in st.session_state:
-            cgsl.recycle_suggestions()
+            if app_config.get("DYNAMIC_SUGGESTIONS", True):
+                cgsl.recycle_suggestions()
+            else:
+                st.session_state.suggestion = \
+                    app_config["DEFAULT_SUGGESTIONS"]
 
     # Main content
 

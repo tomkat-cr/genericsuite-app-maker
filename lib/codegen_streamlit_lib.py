@@ -229,9 +229,13 @@ class StreamlitLib:
         """
         Recycle the suggestions from the AI
         """
+        if "suggestions_prompt_text" in st.session_state:
+            prompt = st.session_state.suggestions_prompt_text
+        else:
+            prompt = self.params.get("SUGGESTIONS_PROMPT_TEXT")
         st.session_state.suggestion = self.get_suggestions_from_ai(
-            self.params["SUGGESTIONS_PROMPT_TEXT"],
-            self.params["SUGGESTIONS_QTY"]
+            prompt,
+            self.params.get("SUGGESTIONS_QTY", 4)
         )
 
     def show_one_suggestion(self, suggestion: any):
@@ -255,11 +259,19 @@ class StreamlitLib:
         """
         Show the suggestion components in the main section
         """
+        if "suggestions_prompt_text" not in st.session_state:
+            st.session_state.suggestions_prompt_text = \
+                self.params.get("SUGGESTIONS_PROMPT_TEXT")
+
+        if st.session_state.get("generate_suggestions"):
+            with st.spinner("Generating suggestions..."):
+                self.recycle_suggestions()
+
         if st.session_state.get("recycle_suggestions"):
             log_debug("RECYCLE_SUGGESTIONS | Recycling suggestions",
                       debug=DEBUG)
             if self.params.get("DYNAMIC_SUGGESTIONS", True):
-                with st.spinner("Recycling suggestions..."):
+                with st.spinner("Refreshing suggestions..."):
                     self.recycle_suggestions()
             elif not st.session_state.get("suggestion"):
                 st.session_state.suggestion = \
@@ -284,12 +296,21 @@ class StreamlitLib:
                         sug_col2.button(self.show_one_suggestion(
                             st.session_state.suggestion.get(
                                 f"s{i+1}")), key=f"s{i+1}")
-            if self.params.get("DYNAMIC_SUGGESTIONS", True):
-                with sug_col3:
+            with sug_col3:
+                if self.params.get("DYNAMIC_SUGGESTIONS", True):
                     sug_col3.button(
                         ":recycle:",
                         key="recycle_suggestions",
                         help="Recycle suggestions buttons",
+                    )
+                with st.expander("Suggestions Prompt"):
+                    st.text_area(
+                        "Prompt:",
+                        st.session_state.suggestions_prompt_text,
+                    )
+                    st.button(
+                        "Generate Suggestions",
+                        key="generate_suggestions",
                     )
 
         # Process the suggestion button pushed
