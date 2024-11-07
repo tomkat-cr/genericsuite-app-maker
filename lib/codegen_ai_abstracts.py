@@ -40,7 +40,7 @@ class LlmProviderAbstract:
         """
         raise NotImplementedError
 
-    def request(
+    def video_gen(
         self,
         question: str,
         prompt_enhancement_text: str = None
@@ -61,7 +61,7 @@ class LlmProviderAbstract:
         """
         raise NotImplementedError
 
-    def generation_check(
+    def video_gen_followup(
         self,
         request_response: dict,
         wait_time: int = 60

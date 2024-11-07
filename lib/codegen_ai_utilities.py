@@ -124,12 +124,15 @@ class TextToVideoProvider(LlmProviderAbstract):
             prompt, question,
             prompt_enhancement_text)
 
-    def request(self, question: str,
-                prompt_enhancement_text: str = None) -> dict:
+    def video_gen(
+        self,
+        question: str,
+        prompt_enhancement_text: str = None
+    ) -> dict:
         """
         Perform a video generation request
         """
-        return self.llm.request(question, prompt_enhancement_text)
+        return self.llm.video_gen(question, prompt_enhancement_text)
 
     def image_gen(
         self,
@@ -145,7 +148,7 @@ class TextToVideoProvider(LlmProviderAbstract):
             prompt_enhancement_text=prompt_enhancement_text,
             image_extension=image_extension)
 
-    def generation_check(
+    def video_gen_followup(
         self,
         request_response: dict,
         wait_time: int = 60
@@ -153,4 +156,4 @@ class TextToVideoProvider(LlmProviderAbstract):
         """
         Perform a video generation request check
         """
-        return self.llm.generation_check(request_response, wait_time)
+        return self.llm.video_gen_followup(request_response, wait_time)

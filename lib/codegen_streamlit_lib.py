@@ -136,9 +136,10 @@ class StreamlitLib:
 
     def save_conversation(
         self, type: str,
-        question: str, answer: str,
+        question: str,
+        answer: str,
         refined_prompt: str = None,
-        ttv_response: dict = None,
+        other_data: dict = None,
         id: str = None
     ):
         """
@@ -151,10 +152,12 @@ class StreamlitLib:
             "type": type,
             "question": question,
             "answer": answer,
-            "ttv_response": ttv_response,
             "refined_prompt": refined_prompt,
             "timestamp": time.time(),
         }
+        if not other_data:
+            other_data = {}
+        item.update(other_data)
         db.save_item(item, id)
         self.update_conversations()
         self.recycle_suggestions()
@@ -252,8 +255,9 @@ class StreamlitLib:
         """
         Show the suggestion components in the main section
         """
-
         if st.session_state.get("recycle_suggestions"):
+            log_debug("RECYCLE_SUGGESTIONS | Recycling suggestions",
+                      debug=DEBUG)
             if self.params.get("DYNAMIC_SUGGESTIONS", True):
                 with st.spinner("Recycling suggestions..."):
                     self.recycle_suggestions()
@@ -280,12 +284,13 @@ class StreamlitLib:
                         sug_col2.button(self.show_one_suggestion(
                             st.session_state.suggestion.get(
                                 f"s{i+1}")), key=f"s{i+1}")
-            with sug_col3:
-                sug_col3.button(
-                    ":recycle:",
-                    key="recycle_suggestions",
-                    help="Recycle suggestions buttons",
-                )
+            if self.params.get("DYNAMIC_SUGGESTIONS", True):
+                with sug_col3:
+                    sug_col3.button(
+                        ":recycle:",
+                        key="recycle_suggestions",
+                        help="Recycle suggestions buttons",
+                    )
 
         # Process the suggestion button pushed
         # (must be done before the user input)
@@ -318,6 +323,35 @@ class StreamlitLib:
                     on_click=self.delete_conversation,
                     args=(conversation['id'],))
 
+    def set_last_retrieved_conversation(self, id: str, conversation: dict):
+        """
+        Set the last retrieved conversation
+        """
+        st.session_state.last_retrieved_conversation = dict(conversation)
+        if "id" not in st.session_state.last_retrieved_conversation:
+            st.session_state.last_retrieved_conversation["id"] = id
+
+    def get_last_retrieved_conversation(self, id: str):
+        """
+        Get the last retrieved conversation. If "last_retrieved_conversation"
+        entry is found and the id matches, return the buffered conversation.
+        Otherwise, retrieve the conversation from the database.
+
+        Args:
+            id (str): The conversation ID.
+
+        Returns:
+            dict: The conversation dictionary, or None if not found.
+        """
+        if "last_retrieved_conversation" in st.session_state and \
+           id == st.session_state.last_retrieved_conversation["id"]:
+            conversation = dict(st.session_state.last_retrieved_conversation)
+        else:
+            conversation = self.get_conversation(id)
+        if conversation:
+            self.set_last_retrieved_conversation(id, conversation)
+        return conversation
+
     def show_conversation_content(
         self,
         id: str, container: st.container,
@@ -328,30 +362,39 @@ class StreamlitLib:
         """
         if not id:
             return
-        conversation = self.get_conversation(id)
+        conversation = self.get_last_retrieved_conversation(id)
         if not conversation:
             container.write("ERROR E-600: Conversation not found")
             return
+        log_debug(
+            "SHOW_CONVERSATION_CONTENT | " +
+            f"\n | conversation: {conversation}", debug=DEBUG
+        )
         if conversation.get('refined_prompt'):
-            log_debug(
-                "SHOW_CONVERSATION_CONTENT | " +
-                f"\n | conversation['question']: {conversation['question']}"
-                "\n | conversation['refined_prompt']: "
-                f"{conversation['refined_prompt']}", debug=DEBUG
-            )
             with additional_container.expander(
                  f"Enhanced Prompt for {conversation['type'].capitalize()}"):
                 st.write(conversation['refined_prompt'])
         if conversation['type'] == "video":
             if conversation.get('answer'):
-                container.video(conversation['answer'])
+                # Check for list type entries, and show them individually
+                if isinstance(conversation['answer'], list):
+                    for url in conversation['answer']:
+                        container.video(url)
+                else:
+                    container.video(conversation['answer'])
             else:
                 self.video_generation(
-                    container, conversation['question'],
-                    conversation['ttv_response'])
+                    result_container=container,
+                    question=conversation['question'],
+                    previous_response=conversation['ttv_response'])
         if conversation['type'] == "image":
             if conversation.get('answer'):
-                container.image(conversation['answer'])
+                # Check for list type entries, and show them individually
+                if isinstance(conversation['answer'], list):
+                    for url in conversation['answer']:
+                        container.image(url)
+                else:
+                    container.image(conversation['answer'])
             else:
                 container.write("ERROR: No image found as answer")
         else:
@@ -360,8 +403,11 @@ class StreamlitLib:
     def show_conversation_question(self, id: str):
         if not id:
             return
-        conversation = self.get_conversation(id)
-        st.session_state.question = conversation['question']
+        conversation = self.get_last_retrieved_conversation(id)
+        if not conversation:
+            st.session_state.question = "ERROR E-700: Conversation not found"
+        else:
+            st.session_state.question = conversation['question']
 
     def validate_question(self, question: str):
         """
@@ -478,7 +524,7 @@ class StreamlitLib:
                 return
             with st.spinner("Requesting the video generation..."):
                 # Requesting the video generation
-                response = ttv_model.request(
+                response = ttv_model.video_gen(
                     question,
                     (self.params["REFINE_VIDEO_PROMPT_TEXT"] if
                      st.session_state.prompt_enhancement_flag else None)
@@ -497,16 +543,19 @@ class StreamlitLib:
 
             # Save a preliminar conversation with the video generation request
             # follow-up data in the ttv_response attribute
+            other_data = {
+                "ttv_response": ttv_response,
+            }
             self.save_conversation(
                 type="video",
                 question=question,
                 refined_prompt=ttv_response['refined_prompt'],
                 answer=video_url,
-                ttv_response=ttv_response,
+                other_data=other_data,
                 id=video_id,
             )
 
-            response = ttv_model.generation_check(ttv_response)
+            response = ttv_model.video_gen_followup(ttv_response)
             if response['error']:
                 result_container.write(
                     f"ERROR E-300: {response['error_message']}")
@@ -517,6 +566,9 @@ class StreamlitLib:
                     "ERROR E-400: Video generation failed."
                     " No video URL. Try again later by clicking"
                     " the corresponding previous answer.")
+                if response.get("ttv_followup_response"):
+                    other_data["ttv_followup_response"] = \
+                        response["ttv_followup_response"]
             else:
                 video_url = response["video_url"]
 
@@ -526,7 +578,7 @@ class StreamlitLib:
                 question=question,
                 refined_prompt=ttv_response['refined_prompt'],
                 answer=video_url,
-                ttv_response=ttv_response,
+                other_data=other_data,
                 id=video_id,
             )
             # result_container.video(video_url)
@@ -592,16 +644,29 @@ class StreamlitLib:
             # result_container.write(response['response'])
             st.rerun()
 
-    def get_item_urls(self, item_type: str):
+    def get_item_urls(self, item_type: str) -> dict:
         """
         Returns a list of video URLs
+        Args:
+            item_type (str): The type of item to get the URLs for.
+                E.g. "video" or "image".
+        Returns:
+            dict: A standard response dictionary with a "urls" key, which is
+                a list of URLs. Also includes a "error" and "error_message"
+                keys to report any errors that occurred.
         """
         response = get_default_resultset()
         response['urls'] = []
         for conversation in st.session_state.conversations:
             if conversation['type'] == item_type:
                 if conversation.get('answer'):
-                    response['urls'].append(conversation['answer'])
+                    # Check for list type entries, and add them individually
+                    # to the list so all entries must be strings urls
+                    if isinstance(conversation['answer'], list):
+                        for url in conversation['answer']:
+                            response['urls'].append(url)
+                    else:
+                        response['urls'].append(conversation['answer'])
         return response
 
     def show_gallery(self, galley_type: str):
@@ -645,7 +710,6 @@ class StreamlitLib:
 
         # Define video URLs
         item_urls = self.get_item_urls(item_type)
-
         if not item_urls['urls']:
             st.write(f"** No {name} found. Try again later. **")
             return

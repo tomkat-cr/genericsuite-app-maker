@@ -5,8 +5,12 @@ from dotenv import load_dotenv
 import streamlit as st
 
 from lib.codegen_streamlit_lib import StreamlitLib, get_app_config
+from lib.codegen_utilities import log_debug
 
 from src.codegen_schema_generator import JsonGenerator
+
+
+DEBUG = True
 
 app_config = get_app_config()
 cgsl = StreamlitLib(app_config)
@@ -38,7 +42,7 @@ def generate_json(result_container: st.container,
         cgsl.save_conversation(
             type="text",
             question=question,
-            refined_prompt=response['refined_prompt'],
+            refined_prompt=response.get('refined_prompt'),
             answer=response['response'],
         )
         # result_container.write(response['response'])
@@ -150,7 +154,8 @@ def page_1():
     # Sidebar
     with st.sidebar:
         st.sidebar.write(
-            f"**{st.session_state.app_name}** {app_config.get('APP_DESCRIPTION')}")
+            f"**{st.session_state.app_name}** "
+            f"{app_config.get('APP_DESCRIPTION')}")
 
         cgsl.data_management_components()
         data_management_container = st.empty()

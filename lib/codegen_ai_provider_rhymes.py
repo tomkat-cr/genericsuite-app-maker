@@ -4,7 +4,9 @@ Rhymes APIs
 """
 import os
 import time
+
 import requests
+import json
 
 from lib.codegen_utilities import (
     log_debug,
@@ -81,14 +83,17 @@ class AllegroLlm(LlmProviderAbstract):
     """
     Allegro text-to-video LLM class
     """
-    def request(self, question: str,
-                prompt_enhancement_text: str = None) -> dict:
+    def video_gen(
+        self,
+        question: str,
+        prompt_enhancement_text: str = None
+    ) -> dict:
         """
         Perform a Allegro video generation request
         """
         return self.allegro_request_video(question, prompt_enhancement_text)
 
-    def generation_check(
+    def video_gen_followup(
         self,
         request_response: dict,
         wait_time: int = 60
@@ -239,7 +244,7 @@ class AllegroLlm(LlmProviderAbstract):
         """
         Perform a Allegro video generation request check
         """
-        request_id = allegro_response["response"]['data']
+        request_id = allegro_response["response"]["data"]
         log_debug("allegro_check_video_generation | " +
                   f"request_id: {request_id}", debug=DEBUG)
 
@@ -258,21 +263,46 @@ class AllegroLlm(LlmProviderAbstract):
         for i in range(10):
             log_debug(f"allegro_check_video_generation | VERIFICATION TRY {i}",
                       debug=DEBUG)
+            # Send the follow-up request to the Allegro API
             response = self.allegro_query(model_params)
             log_debug(f"allegro_check_video_generation | VERIFICATION {i} | " +
                       f"response: {response}", debug=DEBUG)
             if response['error']:
+                response["ttv_followup_response"] = response["error_message"]
                 return response
             if response["response"]['message'] in RHYMES_SUCCESS_RESPONSES \
                and response["response"].get('data'):
-                video_url = response["response"]['data']
+                if isinstance(response["response"]["data"], str):
+                    # Verify if the string has a json content
+                    if "{" in response["response"]["data"] and \
+                       response["response"]["data"].endswith("}"):
+                        # Get the response["response"]["data"] string from the
+                        # first "{"
+                        first_bracket = response["response"]["data"].find("{")
+                        response["response"]["data"] = \
+                            json.loads(
+                                response["response"]["data"][first_bracket:]
+                            )
+                if isinstance(response["response"]["data"], str):
+                    video_url = response["response"]["data"]
+                else:
+                    # The response is a dictionary with an error message
+                    # E.g. { "code": 503, "type": "InternalServerException",
+                    #        "message": "Prediction failed" }
+                    response["ttv_followup_response"] = \
+                        response["response"]["data"]
+                    response["error"] = True
+                    response["error_message"] = \
+                        f"[E-RH-ALL-100] Video generation failed" \
+                        f" (request_id: {request_id}," \
+                        f' response: {response["ttv_followup_response"]})'
                 break
             time.sleep(wait_time)
 
         if not video_url:
             response["error"] = True
-            response["error_message"] = \
-                f"ERROR E-500: Video generation failed" \
+            response["error_message"] = response.get("error_message") or \
+                f"[E-RH-ALL-200] Video generation failed" \
                 f" (request_id: {request_id}, response: {response})"
 
         response['video_url'] = video_url

@@ -26,7 +26,7 @@ DEBUG = True
 USE_PPRINT = False
 
 DEFAULT_AI_PROVIDER = [
-    "chat_openai"
+    "chat_openai",
     "groq",
     "ollama",
     "rhymes",
@@ -217,11 +217,11 @@ class JsonGenerator:
         Returns the user input text or file
         """
         if self.args.user_input_file:
-            self.user_input = self.read_user_input_file()
+            user_input = self.read_user_input_file()
         else:
-            self.user_input = self.args.user_input_text
-        self.user_input = USER_MESSAGE_PROMPT.format(
-            user_input=self.user_input,
+            user_input = self.args.user_input_text
+        user_input = USER_MESSAGE_PROMPT.format(
+            user_input=user_input,
             files="\n".join([
                 f"\nFile: {f.get('name')}" +
                 "\nFile content:" +
@@ -231,6 +231,7 @@ class JsonGenerator:
                 for f in self.reference_files
             ]),
         )
+        return user_input
 
     def log_debug(self, message):
         """
@@ -456,8 +457,8 @@ class JsonGenerator:
         # self.log_debug_structured(self.model_config)
         llm_model = LlmProvider(self.model_config)
         llm_response = llm_model.query(
-            prompt=self.prompt,
-            question=self.user_input,
+            prompt=prompt,
+            question=user_input,
             unified=no_system_prompt,
         )
         if llm_response['error']:
@@ -497,7 +498,7 @@ class JsonGenerator:
         response = self.get_model_response(
             model=self.get_model(),
             prompt=system_prompt,
-            question=user_input,
+            user_input=user_input,
             # messages=messages
         )
 
@@ -545,7 +546,7 @@ class JsonGenerator:
             response = self.get_model_response(
                 model=self.get_model(),
                 prompt=system_prompt,
-                question=user_input,
+                user_input=user_input,
                 # messages=messages
             )
 
@@ -589,7 +590,7 @@ class JsonGenerator:
         Returns the reference files to be used
         """
         # Read the `schema_generator_ref_files.json` file
-        with open('../config/schema_generator_ref_files.json', 'r') as f:
+        with open('./config/schema_generator_ref_files.json', 'r') as f:
             ref_files = json.load(f)
 
         # Create a list of dictionaries with the name, path and content of each
@@ -607,7 +608,13 @@ class JsonGenerator:
         """
         Saves the final result to a file
         """
-        with open('final_summary.txt', 'w') as f:
+        output_file = os.path.join(
+            self.params.get('output_dir', "./output"),
+            self.params.get('output_file', (
+                'final_summary_{date_time}.txt'.format(
+                    date_time=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))))
+        )
+        with open(output_file, 'w') as f:
             if DEBUG:
                 f.write("DEBUG Prompt:\n")
                 f.write("\n")
@@ -658,7 +665,7 @@ class JsonGenerator:
         # Step # 4: Final summary
         # self.final_summary = self.CEO_Agent(self.final_input, is_final=True)
         response = self.CEO_Agent(self.final_input, is_final=True)
-        self.final_summary = response["response"]
+        self.final_summary = response
 
         # Save everything to a file
         self.save_result()
@@ -691,7 +698,7 @@ class JsonGenerator:
         response = self.get_model_response(
             model=self.get_model(),
             prompt=self.prompt,
-            question=self.user_input,
+            user_input=self.user_input,
             # messages=messages
         )
 
@@ -700,30 +707,31 @@ class JsonGenerator:
         self.log_debug('Simple Processing response:')
         self.log_debug(response)
 
-        # self.final_summary = response
-        # self.save_result()
-        # return self.final_summary
-
-        self.final_summary = response["response"]
+        self.final_summary = response
         self.save_result()
-        return response
+        return self.final_summary
+
+        # self.final_summary = response["response"]
+        # self.save_result()
+        # return response
 
     def generate_json(self):
         """
         Main entry point to generate the .json files
         """
-        if not self.user_input_text and not self.user_input_file:
-            response = get_default_resultset()
+        response = get_default_resultset()
+        if not self.args.user_input_text and not self.args.user_input_file:
             response["error"] = True
             response["error_message"] = "User input text or file is required"
             return response
 
         if self.args.agents_count == 0:
             # If the number of agents is 0, we don't need to use the agents
-            return self.simple_processing()
+            response["response"] = self.simple_processing()
         else:
             # Reasoning with agents
-            return self.process_task()
+            response["response"] = self.process_task()
+        return response
 
 
 if __name__ == "__main__":

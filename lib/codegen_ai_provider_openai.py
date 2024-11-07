@@ -142,11 +142,10 @@ class OpenaiImageGen(OpenaiLlm):
         if pam_response['error']:
             return pam_response
 
+        ig_model_name = os.environ.get("OPENAI_IMAGE_GEN_MODEL")
         model_params = {
             # "model": "dall-e-3",
-            "model": (
-                self.model_name or
-                os.environ.get("OPENAI_IMAGE_GEN_MODEL")),
+            "model": ig_model_name,
             "prompt": pam_response["user_input"],
             "size": self.params.get("size", "1024x1024"),
             "quality": self.params.get("quality", "100"),
@@ -163,7 +162,9 @@ class OpenaiImageGen(OpenaiLlm):
         # Process the question and image
         ig_response = client.images.generate(**model_params)
 
-        log_debug(f"Dall-E ig_response: {ig_response}", debug=DEBUG)
+        log_debug(f"openai_image_gen | {ig_model_name}"
+                  f" | ig_response: {ig_response}",
+                  debug=DEBUG)
 
         # The 'ImagesResponse' object has an attribute 'data' which is a
         # list of 'Image' objects.
