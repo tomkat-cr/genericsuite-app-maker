@@ -10,7 +10,7 @@ create_venv() {
 install() {
     create_venv
 	if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-	if [ ! -f requirements.txt ]; then pip install --upgrade pip; pip install streamlit openai requests python-dotenv pymongo ollama groq ; pip freeze > requirements.txt; fi
+	if [ ! -f requirements.txt ]; then pip install --upgrade pip; pip install streamlit requests python-dotenv pymongo openai ollama groq together ; pip freeze > requirements.txt; fi
 }
 
 requirements() {
@@ -19,8 +19,7 @@ requirements() {
 
 run() {
     install
-	# PYTHONPATH=$PYTHONPATH:./src streamlit run src/app_streamlit.py
-	streamlit run app_streamlit.py
+	streamlit run streamlit_app.py
 }
 
 ACTION=$1

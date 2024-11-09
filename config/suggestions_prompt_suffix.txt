@@ -1,0 +1,1 @@
+I want {question} suggestions and give me just a JSON output with the keys s1, s2, s3, etc, and the values for each suggestion.

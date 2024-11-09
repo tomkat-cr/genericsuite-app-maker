@@ -11,16 +11,15 @@ from datetime import datetime
 import json
 import pprint
 
-import requests
 import argparse
 
-# import ollama
-# from ollama import Client
-# from openai import OpenAI
-# from groq import Groq
-
 from lib.codegen_ai_utilities import LlmProvider
-from lib.codegen_utilities import get_default_resultset
+from lib.codegen_utilities import (
+    get_default_resultset,
+    read_file,
+)
+from lib.codegen_utilities import get_app_config
+# from lib.codegen_utilities import log_debug
 
 DEBUG = True
 USE_PPRINT = False
@@ -89,14 +88,24 @@ for the given application and the Langchain Tools python code.
 class ArgsClass:
     def __init__(self, params: dict):
         params = params or {}
+
+        def get_param_or_envvar(param_name: str, default_value: str = None):
+            return params.get(
+                param_name,
+                os.environ.get(
+                    "LLM_PROVIDER",
+                    default_value)
+            )
+
         self.user_input_text = params.get("user_input_text")
         self.user_input_file = params.get("user_input_file")
-        self.provider = params.get("provider", os.environ.get(
-            "LLM_PROVIDER",
-            DEFAULT_AI_PROVIDER[0]))
-        self.model = params.get(
-            "model",
-            DEFAULT_MODEL_TO_USE[DEFAULT_AI_PROVIDER[0]])
+        self.provider = params.get(
+            "provider",
+            get_param_or_envvar("LLM_PROVIDER", DEFAULT_AI_PROVIDER[0]))
+        self.model = params.get("model")
+        # self.model = params.get(
+        #     "model",
+        #     DEFAULT_MODEL_TO_USE[DEFAULT_AI_PROVIDER[0]])
         self.temperature = params.get("temperature", DEFAULT_TEMPERATURE)
         self.stream = params.get("stream", DEFAULT_STREAM)
         self.ollama_base_url = params.get("ollama_base_url", OLLAMA_BASE_URL)
@@ -113,6 +122,7 @@ class JsonGenerator:
             params = {}
         self.params = params or {}
         self.args = self.read_arguments(params)
+        self.args.update(get_app_config())
         self.reference_files = self.get_reference_files()
         self.prompt = DEFAULT_PROMPT
         self.user_input = self.get_user_input()
@@ -435,14 +445,6 @@ class JsonGenerator:
         """
         Returns the response from the model
         """
-        if self.args.provider not in [
-                "ollama",
-                "openai",
-                "groq",
-                "rhymes",
-                "nvidia"
-           ]:
-            raise ValueError(f"Invalid provider: {self.args.provider}")
         self.model_config = {
             'model': model,
             "provider": self.args.provider,
@@ -561,30 +563,6 @@ class JsonGenerator:
 
         return agent
 
-    def read_file(self, file_path):
-        """
-        Reads a file and returns its content
-        """
-        # If the file path begins with "http", it's a URL
-        if file_path.startswith("http"):
-            # If the file path begins with "https://github.com",
-            # we need to replace it with "https://raw.githubusercontent.com"
-            # to get the raw content
-            if file_path.startswith("https://github.com"):
-                file_path = file_path.replace(
-                    "https://github.com",
-                    "https://raw.githubusercontent.com")
-                file_path = file_path.replace("blob/", "")
-            response = requests.get(file_path)
-            if response.status_code == 200:
-                content = response.text
-            else:
-                raise ValueError(f"Error reading file: {file_path}")
-        else:
-            with open(file_path, 'r') as f:
-                content = f.read()
-        return content
-
     def get_reference_files(self):
         """
         Returns the reference files to be used
@@ -599,7 +577,7 @@ class JsonGenerator:
             {
                 'name': ref_file['name'],
                 'path': ref_file['path'],
-                'content': self.read_file(ref_file['path']),
+                'content': read_file(ref_file['path']),
             } for ref_file in ref_files
         ]
         return ref_files_list

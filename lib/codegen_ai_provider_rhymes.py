@@ -55,20 +55,6 @@ class AriaLlm(LlmProviderAbstract):
             },
             for_openai_api=True,
         )
-
-        # model_params = {
-        #     "provider": self.provider,
-        #     "model": self.model_name or os.environ.get("RHYMES_MODEL_NAME"),
-        #     "api_key": os.environ.get("RHYMES_ARIA_API_KEY"),
-        #     "base_url": "https://api.rhymes.ai/v1",
-        #     "stop": ["<|im_end|>"],
-        #     "messages": messages,
-        #     "temperature": 0.5,
-        #     "top_p": 1,
-        # }
-        # if self.params.get("max_tokens"):
-        #     model_params["max_tokens"] = self.params.get("max_tokens")
-
         # Get the OpenAI API response
         log_debug("aria_query | " +
                   f"model_params: {model_params}", debug=DEBUG)
@@ -116,7 +102,7 @@ class AllegroLlm(LlmProviderAbstract):
         llm_model = AriaLlm({
             # It uses the same provider as the LLM, because self.provider is
             # the video model
-            "provider": os.environ.get("LLM_PROVIDER"),
+            "provider": "rhymes",
         })
         return llm_model.query(prompt, question,
                                prompt_enhancement_text)
@@ -187,15 +173,6 @@ class AllegroLlm(LlmProviderAbstract):
         if pam_response['error']:
             return pam_response
 
-        # if prompt_enhancement_text:
-        #     prompt_enhancer_result = self.prompt_enhancer(
-        #         question, prompt_enhancement_text)
-        #     if prompt_enhancer_result['error']:
-        #         return prompt_enhancer_result
-        #     refined_prompt = prompt_enhancer_result['response']
-        # else:
-        #     refined_prompt = question
-
         rand_seed = int(time.time())
         model_params = {
             "api_key": os.environ.get("RHYMES_ALLEGRO_API_KEY"),
@@ -216,8 +193,6 @@ class AllegroLlm(LlmProviderAbstract):
                   f"model_params: {model_params}", debug=DEBUG)
 
         response = self.allegro_query(model_params)
-        # response['refined_prompt'] = refined_prompt \
-        #     if refined_prompt != question else None
         response['refined_prompt'] = pam_response['refined_prompt']
 
         log_debug("allegro_request_video | GENERATION RESULT | " +

@@ -3,7 +3,11 @@ General utilities
 """
 from typing import Any
 import time
+import os
+import json
+
 import uuid
+import requests
 
 
 DEBUG = True
@@ -56,3 +60,48 @@ def get_new_item_id():
     Get the new unique item id
     """
     return str(uuid.uuid4())
+
+
+def read_file(file_path):
+    """
+    Reads a file and returns its content
+    """
+    # If the file path begins with "http", it's a URL
+    if file_path.startswith("http"):
+        # If the file path begins with "https://github.com",
+        # we need to replace it with "https://raw.githubusercontent.com"
+        # to get the raw content
+        if file_path.startswith("https://github.com"):
+            file_path = file_path.replace(
+                "https://github.com",
+                "https://raw.githubusercontent.com")
+            file_path = file_path.replace("blob/", "")
+        response = requests.get(file_path)
+        if response.status_code == 200:
+            content = response.text
+        else:
+            raise ValueError(f"Error reading file: {file_path}")
+    else:
+        with open(file_path, 'r') as f:
+            content = f.read()
+    return content
+
+
+def read_config_file(file_path: str):
+    """
+    Reads a JSON file and returns its content as a dictionary
+    """
+    with open(file_path, 'r') as f:
+        config = json.load(f)
+    return config
+
+
+def get_app_config(config_file_path: str = None):
+    """
+    Returns the app configuration
+    """
+    if not config_file_path:
+        config_file_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../config/app_config.json")
+    return read_config_file(config_file_path)

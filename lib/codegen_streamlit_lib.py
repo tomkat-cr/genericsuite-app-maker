@@ -1,6 +1,7 @@
 """
 Streamlit UI library
 """
+from typing import Any
 import os
 import time
 import json
@@ -12,6 +13,7 @@ from lib.codegen_utilities import (
     get_date_time,
     get_new_item_id,
     get_default_resultset,
+    read_file,
 )
 from lib.codegen_db import CodegenDatabase
 from lib.codegen_ai_utilities import (
@@ -116,7 +118,8 @@ class StreamlitLib:
             db = CodegenDatabase("json", {
                 "JSON_DB_PATH": os.getenv(
                     'JSON_DB_PATH',
-                    self.params["CONVERSATION_DB_PATH"]),
+                    self.get_par_value("CONVERSATION_DB_PATH")
+                ),
             })
         if db_type == 'mongodb':
             db = CodegenDatabase("mongodb", {
@@ -199,17 +202,39 @@ class StreamlitLib:
 
     # Prompt suggestions
 
+    def reset_suggestions_prompt(self):
+        """
+        Reset the suggestions prompt
+        """
+        st.session_state.suggestions_prompt_text = \
+            self.get_par_value("SUGGESTIONS_PROMPT_TEXT")
+
     def get_suggestions_from_ai(self, prompt: str, qty: int = 4) -> dict:
         """
         Get suggestions from the AI
         """
+        result = get_default_resultset()
+        if not self.get_llm_provider():
+            result["error"] = True
+            result["error_message"] = "LLM Provider not selected"
+        if not self.get_llm_model():
+            result["error"] = True
+            result["error_message"] = "LLM Model not selected"
+        if result["error"]:
+            log_debug(f"get_suggestions_from_ai | result ERROR: {result}",
+                      debug=DEBUG)
+            return result
         llm_model = LlmProvider({
-            "provider": os.environ.get("LLM_PROVIDER"),
+            # "provider": self.get_par_or_env("LLM_PROVIDER"),
+            "provider": self.get_llm_provider(),
+            "model_name": self.get_llm_model(),
         })
         llm_response = llm_model.query(prompt, qty)
         log_debug("get_suggestions_from_ai | " +
                   f"response: {llm_response}", debug=DEBUG)
         if llm_response['error']:
+            log_debug("get_suggestions_from_ai | llm_response "
+                      f"ERROR: {llm_response}", debug=DEBUG)
             return llm_response
         suggestions = llm_response['response']
         suggestions = suggestions.replace("\n", "")
@@ -220,25 +245,25 @@ class StreamlitLib:
         suggestions = suggestions.replace('```', '')
         try:
             suggestions = json.loads(suggestions)
+            log_debug("get_suggestions_from_ai | FINAL suggestions:"
+                      f" {suggestions}", debug=DEBUG)
         except Exception as e:
             log_debug(f"get_suggestions_from_ai | ERROR {e}", debug=DEBUG)
-            return self.params["DEFAULT_SUGGESTIONS"]
+            return self.get_par_value("DEFAULT_SUGGESTIONS")
         return suggestions
 
     def recycle_suggestions(self):
         """
         Recycle the suggestions from the AI
         """
-        if "suggestions_prompt_text" in st.session_state:
-            prompt = st.session_state.suggestions_prompt_text
-        else:
-            prompt = self.params.get("SUGGESTIONS_PROMPT_TEXT")
+        prompt = st.session_state.suggestions_prompt_text + \
+            "\n\n" + self.get_par_value("SUGGESTIONS_PROMPT_SUFFIX")
         st.session_state.suggestion = self.get_suggestions_from_ai(
             prompt,
-            self.params.get("SUGGESTIONS_QTY", 4)
+            self.get_par_value("SUGGESTIONS_QTY", 4)
         )
 
-    def show_one_suggestion(self, suggestion: any):
+    def show_one_suggestion(self, suggestion: Any):
         """
         Show one suggestion in the main section
         """
@@ -260,22 +285,24 @@ class StreamlitLib:
         Show the suggestion components in the main section
         """
         if "suggestions_prompt_text" not in st.session_state:
-            st.session_state.suggestions_prompt_text = \
-                self.params.get("SUGGESTIONS_PROMPT_TEXT")
+            self.reset_suggestions_prompt()
 
         if st.session_state.get("generate_suggestions"):
             with st.spinner("Generating suggestions..."):
                 self.recycle_suggestions()
 
+        if st.session_state.get("reset_suggestions_prompt"):
+            self.reset_suggestions_prompt()
+
         if st.session_state.get("recycle_suggestions"):
             log_debug("RECYCLE_SUGGESTIONS | Recycling suggestions",
                       debug=DEBUG)
-            if self.params.get("DYNAMIC_SUGGESTIONS", True):
+            if self.get_par_value("DYNAMIC_SUGGESTIONS", True):
                 with st.spinner("Refreshing suggestions..."):
                     self.recycle_suggestions()
             elif not st.session_state.get("suggestion"):
                 st.session_state.suggestion = \
-                    self.params["DEFAULT_SUGGESTIONS"]
+                    self.get_par_value("DEFAULT_SUGGESTIONS")
 
         # Show the 4 suggestions in the main section
         if "error" in st.session_state.suggestion:
@@ -285,7 +312,7 @@ class StreamlitLib:
             sug_col1, sug_col2, sug_col3 = st.columns(
                 3, gap="small",
             )
-            for i in range(self.params["SUGGESTIONS_QTY"]):
+            for i in range(self.get_par_value("SUGGESTIONS_QTY")):
                 if i % 2 != 0:
                     with sug_col1:
                         sug_col1.button(self.show_one_suggestion(
@@ -297,20 +324,24 @@ class StreamlitLib:
                             st.session_state.suggestion.get(
                                 f"s{i+1}")), key=f"s{i+1}")
             with sug_col3:
-                if self.params.get("DYNAMIC_SUGGESTIONS", True):
+                if self.get_par_value("DYNAMIC_SUGGESTIONS", True):
                     sug_col3.button(
                         ":recycle:",
                         key="recycle_suggestions",
                         help="Recycle suggestions buttons",
                     )
                 with st.expander("Suggestions Prompt"):
-                    st.text_area(
+                    st.session_state.suggestions_prompt_text = st.text_area(
                         "Prompt:",
                         st.session_state.suggestions_prompt_text,
                     )
                     st.button(
                         "Generate Suggestions",
                         key="generate_suggestions",
+                    )
+                    st.button(
+                        "Reset Prompt",
+                        key="reset_suggestions_prompt",
                     )
 
         # Process the suggestion button pushed
@@ -327,7 +358,7 @@ class StreamlitLib:
         """
         Show the conversations in the side bar
         """
-        title_length = self.params["CONVERSATION_TITLE_LENGTH"]
+        title_length = self.get_par_value("CONVERSATION_TITLE_LENGTH")
         st.header("Previous answers")
         for conversation in st.session_state.conversations:
             col1, col2 = st.columns(2, gap="small")
@@ -395,6 +426,7 @@ class StreamlitLib:
             with additional_container.expander(
                  f"Enhanced Prompt for {conversation['type'].capitalize()}"):
                 st.write(conversation['refined_prompt'])
+
         if conversation['type'] == "video":
             if conversation.get('answer'):
                 # Check for list type entries, and show them individually
@@ -408,6 +440,7 @@ class StreamlitLib:
                     result_container=container,
                     question=conversation['question'],
                     previous_response=conversation['ttv_response'])
+
         if conversation['type'] == "image":
             if conversation.get('answer'):
                 # Check for list type entries, and show them individually
@@ -418,6 +451,7 @@ class StreamlitLib:
                     container.image(conversation['answer'])
             else:
                 container.write("ERROR: No image found as answer")
+
         else:
             container.write(conversation['answer'])
 
@@ -445,6 +479,18 @@ class StreamlitLib:
 
     def format_results(self, results: list):
         return "\n*".join(results)
+
+    def attach_files(self, files):
+        """
+        Save the files to be attached to the LLM/model call
+        """
+        if "files_attached" not in st.session_state:
+            st.session_state.files_to_attach = []
+        if not files:
+            return
+        for file in files:
+            if file:
+                st.session_state.files_to_attach.append(file)
 
     def import_data(self, container: st.container):
         """
@@ -516,6 +562,193 @@ class StreamlitLib:
 
     # UI
 
+    def get_title(self):
+        """
+        Returns the title of the app
+        """
+        return (f"{st.session_state.app_name_version}"
+                f" {st.session_state.app_icon}")
+
+    def show_button_of_type(self, button_config: dict, extra_kwargs: dict,
+                            container: Any):
+        """
+        Show a button based on the button_config
+        Args:
+            button_config (dict): button configuration
+                {
+                    "text": "Answer Question",
+                    "key": "generate_text",
+                    "enable_config_name": "GENERATE_TEXT_ENABLED",
+                    "type": "checkbox",
+                }
+        """
+        button_type = button_config.get("type", "button")
+        if button_type == "checkbox":
+            container.checkbox(
+                button_config["text"],
+                key=button_config["key"],
+                **extra_kwargs)
+        elif button_type == "spacer":
+            container.write(button_config.get("text", ""))
+        else:
+            # Defaults to button
+            container.button(
+                button_config["text"],
+                key=button_config["key"],
+                **extra_kwargs)
+
+    def show_buttons_row(self, buttons_config: list):
+        """
+        Show buttons based on the buttons_config
+        Args:
+            buttons_config (listo): list of buttons configurations
+                [
+                    # Button example with enable config
+                    {
+                        "text": "Answer Question",
+                        "key": "generate_text",
+                        "enable_config_name": "TEXT_GENERATION_ENABLED",
+                    },
+                    # Button example with a function and no enable config
+                    {
+                        "text": "Enhance prompt",
+                        "key": "prompt_enhancement",
+                        "on_change": cgsl.prompt_enhancement
+                    },
+
+        Returns:
+            None
+        """
+        col = st.columns(len(buttons_config))
+        col_index = 0
+        for button in buttons_config:
+            extra_kwargs = {}
+            if button.get("on_change", None):
+                extra_kwargs["on_change"] = button["on_change"]
+            if button.get("enable_config_name", None):
+                with col[col_index]:
+                    if self.get_par_value(button["enable_config_name"], True):
+                        self.show_button_of_type(
+                            button,
+                            extra_kwargs,
+                            col[col_index])
+                    else:
+                        st.write("")
+                col_index += 1
+            else:
+                with col[col_index]:
+                    self.show_button_of_type(
+                        button,
+                        extra_kwargs,
+                        col[col_index])
+                    col_index += 1
+
+    # AI
+
+    def get_llm_provider(
+        self,
+        param_name: str,
+        session_state_key: str
+    ):
+        """
+        Returns the LLM provider
+        """
+        # if "llm_provider" not in st.session_state:
+        #     return self.get_par_value("LLM_PROVIDER")
+        # return st.session_state.llm_provider
+        if session_state_key not in st.session_state:
+            return self.get_par_value(param_name)[0]
+        return st.session_state.get(session_state_key)
+
+    def get_llm_model(
+        self,
+        parent_param_name: str,
+        parent_session_state_key: str,
+        param_name: str,
+        session_state_key: str
+    ):
+        """
+        Returns the LLM model
+        """
+        # if "llm_model" not in st.session_state:
+        #     llm_provider = self.get_llm_provider()
+        #     if not llm_provider:
+        #         return None
+        #     llm_models = self.get_par_value(
+        #         "LLM_AVAILABLE_MODELS").get(llm_provider, [])
+        #     if not llm_models:
+        #         return None
+        #     return llm_models[0]
+        # return st.session_state.llm_model
+        if session_state_key not in st.session_state:
+            llm_provider = self.get_llm_provider(
+                parent_param_name, parent_session_state_key)
+            if not llm_provider:
+                return None
+            llm_models = self.get_par_value(
+                param_name).get(llm_provider, [])
+            if not llm_models:
+                return None
+            return llm_models[0]
+        return st.session_state.get(session_state_key)
+
+    def get_model_options(
+        self,
+        parent_param_name: str,
+        parent_session_state_key: str,
+        param_name: str,
+    ):
+        """
+        Returns the model options for the LLM call
+        """
+        llm_provider = self.get_llm_provider(
+            parent_param_name, parent_session_state_key)
+        if not llm_provider:
+            return []
+        return self.get_par_value(param_name, {}).get(llm_provider, [])
+        # return self.get_par_value(
+        #     "LLM_AVAILABLE_MODELS").get(llm_provider, [])
+
+    def get_llm_provider_index(
+        self,
+        param_name: str,
+        session_state_key: str
+    ):
+        available_llm_providers = self.get_par_value("LLM_PROVIDERS")
+        try:
+            llm_provider_index = available_llm_providers.index(
+                self.get_llm_provider(
+                    param_name,
+                    session_state_key
+                ))
+        except ValueError:
+            llm_provider_index = 0
+        return llm_provider_index
+
+    def get_llm_model_index(
+        self,
+        parent_param_name: str,
+        parent_session_state_key: str,
+        param_name: str,
+        session_state_key: str
+    ):
+        available_llm_models = self.get_model_options(
+            parent_param_name,
+            parent_session_state_key,
+            param_name
+        )
+        try:
+            llm_model_index = available_llm_models.index(
+                self.get_llm_model(
+                    parent_param_name,
+                    parent_session_state_key,
+                    param_name,
+                    session_state_key
+                ))
+        except ValueError:
+            llm_model_index = 0
+        return llm_model_index
+
     def prompt_enhancement(self):
         """
         Prompt enhancement checkbox callback
@@ -525,6 +758,79 @@ class StreamlitLib:
             if st.session_state.prompt_enhancement:
                 st.session_state.prompt_enhancement_flag = True
 
+    def text_generation(self, result_container: st.container,
+                        question: str = None):
+        if not question:
+            question = st.session_state.question
+        if not self.validate_question(question):
+            return
+        if not self.get_llm_provider():
+            result_container.write(
+                "ERROR E-100-A: LLM Provider not selected")
+            return
+        if not self.get_llm_model():
+            result_container.write(
+                "ERROR E-100-B: LLM Model not selected")
+            return
+
+        with st.spinner("Procesing text generation..."):
+            # Generating answer
+            llm_model = LlmProvider({
+                # "provider": self.get_par_or_env("LLM_PROVIDER"),
+                "provider": self.get_llm_provider(),
+                "model_name": self.get_llm_model(),
+            })
+            prompt = "{question}"
+            response = llm_model.query(
+                prompt, question,
+                (self.get_par_value("REFINE_LLM_PROMPT_TEXT") if
+                 st.session_state.prompt_enhancement_flag else None)
+            )
+            if response['error']:
+                result_container.write(
+                    f"ERROR E-100: {response['error_message']}")
+                return
+            self.save_conversation(
+                type="text",
+                question=question,
+                refined_prompt=response['refined_prompt'],
+                answer=response['response'],
+            )
+            # result_container.write(response['response'])
+            st.rerun()
+
+    def image_generation(self, result_container: st.container,
+                         question: str = None):
+        if not question:
+            question = st.session_state.question
+        if not self.validate_question(question):
+            return
+
+        other_data = {}
+        with st.spinner("Procesing image generation..."):
+            llm_model = ImageGenProvider({
+                "provider": self.get_par_or_env("TEXT_TO_IMAGE_PROVIDER"),
+            })
+            response = llm_model.image_gen(
+                question,
+                (self.get_par_value("REFINE_LLM_PROMPT_TEXT") if
+                 st.session_state.prompt_enhancement_flag else None)
+            )
+            if response['error']:
+                # result_container.write(
+                #     f"ERROR E-IG-100: {response['error_message']}")
+                other_data["error_message"] = (
+                    f"ERROR E-IG-100: {response['error_message']}")
+            self.save_conversation(
+                type="image",
+                question=question,
+                refined_prompt=response['refined_prompt'],
+                answer=response['response'],
+                other_data=other_data,
+            )
+            # result_container.write(response['response'])
+            st.rerun()
+
     def video_generation(
         self,
         result_container: st.container,
@@ -532,7 +838,7 @@ class StreamlitLib:
         previous_response: dict = None
     ):
         ttv_model = TextToVideoProvider({
-            "provider": os.environ.get("TEXT_TO_VIDEO_PROVIDER"),
+            "provider": self.get_par_or_env("TEXT_TO_VIDEO_PROVIDER"),
         })
         if previous_response:
             response = previous_response.copy()
@@ -547,7 +853,7 @@ class StreamlitLib:
                 # Requesting the video generation
                 response = ttv_model.video_gen(
                     question,
-                    (self.params["REFINE_VIDEO_PROMPT_TEXT"] if
+                    (self.get_par_value("REFINE_VIDEO_PROMPT_TEXT") if
                      st.session_state.prompt_enhancement_flag else None)
                 )
                 if response['error']:
@@ -578,20 +884,22 @@ class StreamlitLib:
 
             response = ttv_model.video_gen_followup(ttv_response)
             if response['error']:
-                result_container.write(
+                other_data["error_message"] = (
                     f"ERROR E-300: {response['error_message']}")
-                return
-
-            if not response.get("video_url"):
-                result_container.write(
+            elif response.get("video_url"):
+                video_url = response["video_url"]
+            else:
+                other_data["error_message"] = (
                     "ERROR E-400: Video generation failed."
                     " No video URL. Try again later by clicking"
                     " the corresponding previous answer.")
                 if response.get("ttv_followup_response"):
                     other_data["ttv_followup_response"] = \
                         response["ttv_followup_response"]
-            else:
-                video_url = response["video_url"]
+
+            if previous_response and other_data.get("error_message"):
+                result_container.warning(other_data["error_message"])
+                return
 
             # Save the conversation with the video generation result
             self.save_conversation(
@@ -602,68 +910,13 @@ class StreamlitLib:
                 other_data=other_data,
                 id=video_id,
             )
-            # result_container.video(video_url)
-            st.rerun()
 
-    def text_generation(self, result_container: st.container,
-                        question: str = None):
-        if not question:
-            question = st.session_state.question
-        if not self.validate_question(question):
-            return
+            if previous_response:
+                result_container.video(video_url)
+            else:
+                st.rerun()
 
-        with st.spinner("Procesing text generation..."):
-            # Generating answer
-            llm_model = LlmProvider({
-                "provider": os.environ.get("LLM_PROVIDER"),
-            })
-            prompt = "{question}"
-            response = llm_model.query(
-                prompt, question,
-                (self.params["REFINE_LLM_PROMPT_TEXT"] if
-                 st.session_state.prompt_enhancement_flag else None)
-            )
-            if response['error']:
-                result_container.write(
-                    f"ERROR E-100: {response['error_message']}")
-                return
-            self.save_conversation(
-                type="text",
-                question=question,
-                refined_prompt=response['refined_prompt'],
-                answer=response['response'],
-            )
-            # result_container.write(response['response'])
-            st.rerun()
-
-    def image_generation(self, result_container: st.container,
-                         question: str = None):
-        if not question:
-            question = st.session_state.question
-        if not self.validate_question(question):
-            return
-
-        with st.spinner("Procesing image generation..."):
-            llm_model = ImageGenProvider({
-                "provider": os.environ.get("TEXT_TO_IMAGE_PROVIDER"),
-            })
-            response = llm_model.image_gen(
-                question,
-                (self.params["REFINE_LLM_PROMPT_TEXT"] if
-                 st.session_state.prompt_enhancement_flag else None)
-            )
-            if response['error']:
-                result_container.write(
-                    f"ERROR E-IG-100: {response['error_message']}")
-                return
-            self.save_conversation(
-                type="image",
-                question=question,
-                refined_prompt=response['refined_prompt'],
-                answer=response['response'],
-            )
-            # result_container.write(response['response'])
-            st.rerun()
+    # Gallery management
 
     def get_item_urls(self, item_type: str) -> dict:
         """
@@ -719,7 +972,7 @@ class StreamlitLib:
             vertical_alignment="bottom")
         with head_col1:
             head_col1.title(
-                f"{st.session_state.app_name} {st.session_state.app_icon}")
+                self.get_title())
             head_col1.write(title)
         with head_col2:
             head_col2.button(
@@ -736,7 +989,7 @@ class StreamlitLib:
             return
 
         # Display videos in a 3-column layout
-        columns = self.params.get(f"{item_type.upper()}_GALLERY_COLUMNS", 3)
+        columns = self.get_par_value(f"{item_type.upper()}_GALLERY_COLUMNS", 3)
         cols = st.columns(columns)
         for i, item_url in enumerate(item_urls['urls']):
             with cols[i % columns]:
@@ -745,31 +998,23 @@ class StreamlitLib:
                 elif item_type == "image":
                     st.image(item_url)
 
+    # General functions
+
+    def get_par_value(self, param_name: str, default_value: str = None):
+        """
+        Returns the parameter value. If the parameter value is a file path,
+        it will be read and returned.
+        """
+        result = self.params.get(param_name, default_value)
+        if result and isinstance(result, str) and result.startswith("[") \
+           and result.endswith("]"):
+            result = read_file(f"config/{result[1:-1]}")
+        return result
+
     def get_par_or_env(self, param_name: str, default_value: str = None):
         """
         Returns the parameter value or the environment variable value
         """
         if os.environ.get(param_name):
             return os.environ.get(param_name)
-        if self.params.get(param_name):
-            return self.params.get(param_name)
-        return default_value
-
-
-def read_config_file(file_path: str):
-    """
-    Reads a JSON file and returns its content as a dictionary
-    """
-    with open(file_path, 'r') as f:
-        config = json.load(f)
-    return config
-
-
-def get_app_config():
-    """
-    Returns the app configuration
-    """
-    config_file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "../config/app_config.json")
-    return read_config_file(config_file_path)
+        return self.get_par_value(param_name, default_value)

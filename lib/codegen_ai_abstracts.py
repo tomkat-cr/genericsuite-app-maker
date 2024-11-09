@@ -71,16 +71,23 @@ class LlmProviderAbstract:
         """
         raise NotImplementedError
 
-    def prompt_enhancer(self, question: str,
-                        prompt_enhancement_text: str = None) -> dict:
+    def prompt_enhancer(
+        self,
+        question: str,
+        prompt_enhancement_text: str = None
+    ) -> dict:
         """
         Perform a prompt enhancement request
         """
         response = get_default_resultset()
         if not prompt_enhancement_text:
             prompt_enhancement_text = DEFAULT_PROMPT_ENHANCEMENT_TEXT
-        log_debug("PROMPT_ENHANCER | prompt_enhancement_text: " +
-                  f"{prompt_enhancement_text}", debug=DEBUG)
+        log_debug("PROMPT_ENHANCER"
+                  "\n | prompt_enhancement_text: "
+                  f"\n{prompt_enhancement_text}"
+                  "\n | question:"
+                  f"\n{question}",
+                  debug=DEBUG)
         llm_response = self.query(prompt_enhancement_text, question)
         log_debug("PROMPT_ENHANCER | llm_response: " + f"{llm_response}",
                   debug=DEBUG)
@@ -136,12 +143,12 @@ class LlmProviderAbstract:
             unified = True
         if unified:
             # Check if the system prompt string has the "{question}" string
-            if system_prompt and "{question}" in system_prompt:
-                unified_prompt = system_prompt.format(question=user_input)
-            elif system_prompt:
+            if system_prompt:
                 unified_prompt = f"{system_prompt}\n{user_input}"
             else:
                 unified_prompt = f"{user_input}"
+            if unified_prompt and "{question}" in unified_prompt:
+                unified_prompt = unified_prompt.format(question=user_input)
             messages = [
                 {
                     'role': 'user',
@@ -216,7 +223,8 @@ class LlmProviderAbstract:
             )
             return response
 
-        if response["system_prompt"]:
+        if response["system_prompt"] and \
+           response["system_prompt"] != "{question}":
             # Refine only the system prompt...
             llm_response = self.prompt_enhancer(
                 response["system_prompt"], prompt_enhancement_text)
@@ -271,11 +279,11 @@ class LlmProviderAbstract:
         for key in ["model", "model_name", "messages", "stop"]:
             if params.get(key):
                 model_params[self.naming.get(key, key)] = params[key]
-        for key in ["temperature"]:
+        for key in ["temperature", "top_p"]:
             if params.get(key):
                 model_params[self.naming.get(key, key)] = \
                     float(params[key])
-        for key in ["top_p", "max_tokens"]:
+        for key in ["top_k", "max_tokens"]:
             if params.get(key):
                 model_params[self.naming.get(key, key)] = int(params[key])
         for key in ["stream"]:
