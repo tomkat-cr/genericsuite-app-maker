@@ -23,6 +23,14 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 
 ### New
 Add tabs to organize the multiple app and code generation options [GS-55].
+Add use response as prompt feature [GS-55].
+
+### Changes
+Main streamlit UI layout elements separated in different functions [GS-55].
+All model type (text, video, image) uses the model configuration UI selection [GS-55].
+
+### Fixes
+Fix the way enhance prompt feature works, because it was not working properly with the absense of prompt text model [GS-55].
 
 
 ## 0.0.1 (2024-11-08)

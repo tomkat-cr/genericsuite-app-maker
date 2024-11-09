@@ -20,8 +20,10 @@ cgsl = StreamlitLib(app_config)
 # Code Generator specific
 
 
-def generate_json(result_container: st.container,
-                  question: str = None):
+def process_generate_json(
+    result_container: st.container,
+    question: str = None
+):
     """
     Generates the JSON file and GS python code for Tools
     """
@@ -50,26 +52,27 @@ def generate_json(result_container: st.container,
         st.rerun()
 
 
-def add_footer():
+def process_use_response_as_prompt():
     """
-    Add the footer to the page
+    Process the use_response_as_prompt button pushed
     """
-    st.caption(f"© 2024 {st.session_state.maker_name}. All rights reserved.")
+    if st.session_state.use_response_as_prompt_flag:
+        if "last_retrieved_conversation" in st.session_state:
+            conversation = dict(st.session_state.last_retrieved_conversation)
+            st.session_state.question = conversation['answer']
+    st.session_state.use_response_as_prompt_flag = False
 
 
-def page_1():
-    # Get suggested questions initial value
-    with st.spinner("Loading App..."):
-        if "suggestion" not in st.session_state:
-            if cgsl.get_par_value("DYNAMIC_SUGGESTIONS", True):
-                cgsl.recycle_suggestions()
-            else:
-                st.session_state.suggestion = \
-                    cgsl.get_par_value("DEFAULT_SUGGESTIONS")
+# UI elements
 
-    # Main content
+def add_title():
+    """
+    Add the title section to the page
+    """
 
-    # Title
+    # Emoji shortcodes
+    # https://streamlit-emoji-shortcodes-streamlit-app-gwckff.streamlit.app/
+
     with st.container():
         col = st.columns(
             2, gap="small",
@@ -95,22 +98,27 @@ def page_1():
                         on_click=cgsl.set_query_param,
                         args=("page", "image_gallery"))
 
-    tab1, tab2, tab3 = st.tabs(["Main", "App Ideation", "Code Generation"])
 
-    # Suggestions
-    with st.container():
-        suggestion_container = st.empty()
-        cgsl.show_suggestion_components(suggestion_container)
+def add_suggestions():
+    """
+    Add the suggestions section to the page
+    """
+    suggestion_container = st.empty()
+    cgsl.show_suggestion_components(suggestion_container)
 
-        # Show the siderbar selected conversarion's question and answer in the
-        # main section
-        # (must be done before the user input)
-        for conversation in st.session_state.conversations:
-            if st.session_state.get(conversation['id']):
-                cgsl.show_conversation_question(conversation['id'])
-                break
+    # Show the siderbar selected conversarion's question and answer in the
+    # main section
+    # (must be done before the user input)
+    for conversation in st.session_state.conversations:
+        if st.session_state.get(conversation['id']):
+            cgsl.show_conversation_question(conversation['id'])
+            break
 
-    # Models selection
+
+def add_models_selection():
+    """
+    Add the models selection to the page
+    """
     available_llm_providers = cgsl.get_par_value("LLM_PROVIDERS")
     llm_provider_index = cgsl.get_llm_provider_index(
         "LLM_PROVIDERS",
@@ -199,7 +207,11 @@ def page_1():
                 index=video_model_index,
                 help="Select the model to use for the text-to-video call")
 
-    # Attachments
+
+def add_attachments():
+    """
+    Add the attachments section to the page
+    """
     with st.expander("Attachments"):
         st.file_uploader(
             "Choose file(s) to be attached to the conversation",
@@ -208,20 +220,48 @@ def page_1():
             key="attach_files",
         )
 
-    # User input
+
+def add_user_input():
+    """
+    Add the user input section to the page and return the question object
+    """
     with st.container():
         question = st.text_area(
             "Question / Prompt:",
             st.session_state.question)
+    return question
 
-    # Emoji shortcodes
-    # https://streamlit-emoji-shortcodes-streamlit-app-gwckff.streamlit.app/
 
-    # Buttons
+def get_response_as_prompt_button_config(key_name: str):
+    """
+    Returns the response as prompt button config
+    """
+    return {
+        "text": "Use Response as Prompt",
+        "key": key_name,
+        "enable_config_name": "USE_RESPONSE_AS_PROMPT_ENABLED",
+        "on_click": cgsl.use_response_as_prompt,
+        "args": (key_name,),
+    }
 
-    # Buttons line 1: Answer Questions, Generate Code, Generate Video,
-    # Generate Image, Use Response as Prompt, Enhance prompt
 
+def get_prompt_enhancement_button_config(key_name: str):
+    """
+    Returns the prompt enhancement button config
+    """
+    return {
+        "text": "Enhance prompt",
+        "key": key_name,
+        "type": "checkbox",
+        "on_change": cgsl.prompt_enhancement,
+        "args": (key_name,),
+    }
+
+
+def add_buttons_for_main_tab():
+    """
+    Add the main tab buttons section to the page
+    """
     with st.container():
         buttons_config = [
             {
@@ -239,33 +279,24 @@ def page_1():
                 "key": "generate_image",
                 "enable_config_name": "IMAGE_GENERATION_ENABLED",
             },
-            {
-                "text": "Use Response as Prompt",
-                "key": "use_response_as_prompt",
-                "enable_config_name": "USE_RESPONSE_AS_PROMPT_ENABLED",
-            },
-            {
-                "text": "",
-                "type": "spacer",
-            },
             # {
-            #     "text": ":paperclip:",
-            #     "key": "attach_files",
-            #     "enable_config_name": "ATTACH_FILES_ENABLED",
+            #     "text": "",
+            #     "type": "spacer",
             # },
-            {
-                "text": "Enhance prompt",
-                "key": "prompt_enhancement",
-                "type": "checkbox",
-                "on_change": cgsl.prompt_enhancement,
-            },
+            get_response_as_prompt_button_config(
+                "use_response_as_prompt_main_tab"),
+            get_prompt_enhancement_button_config(
+                "prompt_enhancement_main_tab"),
         ]
         cgsl.show_buttons_row(buttons_config)
 
-        # Buttons line 2:
-        # Generate App Names, Generate App Structure,
-        # Start App Code, Generate Presentation
 
+def add_buttons_for_app_ideation_tab():
+    """
+    Add the app ideation tab buttons section to the page
+    """
+
+    with st.container():
         buttons_config = [
             {
                 "text": "Generate App Names",
@@ -278,16 +309,6 @@ def page_1():
                 "enable_config_name": "GENERATE_APP_STRUCTURE_ENABLED",
             },
             {
-                "text": "Generate Config & Code",
-                "key": "generate_code",
-                "enable_config_name": "CODE_GENERATION_ENABLED",
-            },
-            {
-                "text": "Start App Code",
-                "key": "start_app_code",
-                "enable_config_name": "START_APP_CODE_ENABLED",
-            },
-            {
                 "text": "Generate Presentation",
                 "key": "generate_presentation",
                 "enable_config_name": "GENERATE_PRESENTATION_ENABLED",
@@ -297,32 +318,70 @@ def page_1():
                 "key": "generate_video_script",
                 "enable_config_name": "GENERATE_VIDEO_SCRIPT_ENABLED",
             },
+            get_response_as_prompt_button_config(
+                "use_response_as_prompt_app_ideation_tab"),
+            get_prompt_enhancement_button_config(
+                "prompt_enhancement_app_ideation_tab"),
         ]
         cgsl.show_buttons_row(buttons_config)
 
-        # # Buttons line 3: Generate Video Script
 
-        # buttons_config = [
-        # ]
-        # cgsl.show_buttons_row(buttons_config)
+def add_buttons_for_code_gen_tab():
+    """
+    Add the code generation tab buttons section to the page
+    """
+    with st.container():
+        buttons_config = [
+            {
+                "text": "Generate Config & Tools Code",
+                "key": "generate_code",
+                "enable_config_name": "CODE_GENERATION_ENABLED",
+            },
+            {
+                "text": "Start App Code",
+                "key": "start_app_code",
+                "enable_config_name": "START_APP_CODE_ENABLED",
+            },
+            get_response_as_prompt_button_config(
+                "use_response_as_prompt_code_gen_tab"),
+            get_prompt_enhancement_button_config(
+                "prompt_enhancement_code_gen_tab"),
+        ]
+        cgsl.show_buttons_row(buttons_config)
 
-    # Results containers
+
+def add_results_containers():
+    """
+    Add the results containers to the page
+    """
     with st.container():
         additional_result_container = st.empty()
         result_container = st.empty()
+    return additional_result_container, result_container
 
-    # Show the selected conversation's question and answer in the
-    # main section
+
+def add_show_selected_conversation(
+        result_container: st.container,
+        additional_result_container: st.container):
+    """
+    Show the selected conversation's question and answer in the
+    main section
+    """
+    if "new_id" not in st.session_state:
+        return
     with st.container():
-        if "new_id" in st.session_state:
-            cgsl.show_conversation_question(st.session_state.new_id)
-            cgsl.show_conversation_content(
-                st.session_state.new_id,
-                result_container,
-                additional_result_container)
-            st.session_state.new_id = None
+        cgsl.show_conversation_question(st.session_state.new_id)
+        cgsl.show_conversation_content(
+            st.session_state.new_id,
+            result_container,
+            additional_result_container)
+        st.session_state.new_id = None
 
-    # Sidebar
+
+def add_sidebar():
+    """
+    Add the sidebar to the page and return the data management container
+    """
     with st.sidebar:
         app_desc = cgsl.get_par_value("APP_DESCRIPTION")
         app_desc = app_desc.replace(
@@ -335,8 +394,17 @@ def page_1():
 
         # Show the conversations in the side bar
         cgsl.show_conversations()
+    return data_management_container
 
-    # Check buttons pushed
+
+def add_check_buttons_pushed(
+        result_container: st.container,
+        additional_result_container: st.container,
+        data_management_container: st.container,
+        question: str):
+    """
+    Check buttons pushed
+    """
 
     # Process the generate_video button pushed
     if st.session_state.get("generate_video"):
@@ -352,7 +420,7 @@ def page_1():
 
     # Process the generate_code button pushed
     if st.session_state.get("generate_code"):
-        generate_json(result_container, question)
+        process_generate_json(result_container, question)
 
     # Show the selected conversation's question and answer in the
     # main section
@@ -376,6 +444,79 @@ def page_1():
             f"{cgsl.format_results(st.session_state.dm_results)}",
             container=data_management_container)
         st.session_state.dm_results = None
+
+
+def add_footer():
+    """
+    Add the footer to the page
+    """
+    st.caption(f"© 2024 {st.session_state.maker_name}. All rights reserved.")
+
+
+def page_1():
+    # Get suggested questions initial value
+    with st.spinner("Loading App..."):
+        if "suggestion" not in st.session_state:
+            if cgsl.get_par_value("DYNAMIC_SUGGESTIONS", True):
+                cgsl.recycle_suggestions()
+            else:
+                st.session_state.suggestion = \
+                    cgsl.get_par_value("DEFAULT_SUGGESTIONS")
+
+    # Main content
+
+    # Title
+    add_title()
+
+    # Suggestions
+    add_suggestions()
+
+    # Models selection
+    add_models_selection()
+
+    # Attachments
+    add_attachments()
+
+    # Process the use_response_as_prompt button pushed
+    process_use_response_as_prompt()
+
+    # User input
+    question = add_user_input()
+
+    # Tabs defintion
+    tab1, tab2, tab3 = st.tabs(["Main", "App Ideation", "Code Generation"])
+
+    with tab1:
+        # Buttons
+        add_buttons_for_main_tab()
+
+    with tab2:
+        # Buttons
+        add_buttons_for_app_ideation_tab()
+
+    with tab3:
+        # Buttons
+        add_buttons_for_code_gen_tab()
+
+    # Results containers
+    additional_result_container, result_container = add_results_containers()
+
+    # Show the selected conversation's question and answer in the
+    # main section
+    add_show_selected_conversation(
+        result_container,
+        additional_result_container)
+
+    # Sidebar
+    data_management_container = add_sidebar()
+
+    # Check buttons pushed
+    add_check_buttons_pushed(
+        result_container,
+        additional_result_container,
+        data_management_container,
+        question
+    )
 
     # Footer
     with st.container():
@@ -411,6 +552,8 @@ def main():
         st.session_state.question = ""
     if "prompt_enhancement_flag" not in st.session_state:
         st.session_state.prompt_enhancement_flag = False
+    if "use_response_as_prompt_flag" not in st.session_state:
+        st.session_state.use_response_as_prompt_flag = False
     if "conversations" not in st.session_state:
         cgsl.update_conversations()
 
@@ -423,17 +566,17 @@ def main():
     )
 
     # Query params to handle navigation
-    page = st.query_params.get("page", cgsl.get_par_value("DEFAULT_PAGE",
-                                                          "home"))
+    page = st.query_params.get("page", cgsl.get_par_value("DEFAULT_PAGE"))
 
     # Page navigation logic
-    if page == "home":
-        page_1()
-    elif page == "video_gallery":
+    if page == "video_gallery":
         page_2()
     elif page == "image_gallery":
         page_3()
+    # if page == "home":
+    #     page_1()
     else:
+        # Defaults to home
         page_1()
 
 

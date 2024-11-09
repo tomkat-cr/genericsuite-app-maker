@@ -40,6 +40,24 @@ class LlmProviderAbstract:
         """
         raise NotImplementedError
 
+    def query_from_text_model(
+        self,
+        prompt: str,
+        question: str,
+        prompt_enhancement_text: str = None,
+        unified: bool = False,
+    ) -> dict:
+        result = get_default_resultset()
+        if not self.params.get("text_model_class"):
+            result["error"] = True
+            result["error_message"] = "Text model class not provided"
+            return result
+        return self.params["text_model_class"].query(
+            prompt,
+            question,
+            prompt_enhancement_text,
+            unified)
+
     def video_gen(
         self,
         question: str,

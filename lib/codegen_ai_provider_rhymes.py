@@ -96,16 +96,11 @@ class AllegroLlm(LlmProviderAbstract):
         prompt_enhancement_text: str = None,
         unified: bool = False,
     ) -> dict:
-        """
-        Perform a Aria request
-        """
-        llm_model = AriaLlm({
-            # It uses the same provider as the LLM, because self.provider is
-            # the video model
-            "provider": "rhymes",
-        })
-        return llm_model.query(prompt, question,
-                               prompt_enhancement_text)
+        return self.query_from_text_model(
+            prompt,
+            question,
+            prompt_enhancement_text,
+            unified)
 
     def allegro_query(self, model_params: dict) -> dict:
         """

@@ -60,14 +60,14 @@ class HuggingFaceLlm(LlmProviderAbstract):
         model_params = {
             "inputs": pam_response["messages"][0]["content"],
             "parameters": {
-                "do_sample": True,
+                # "do_sample": True,
                 # "max_new_tokens": 1024,
                 # "temperature": 0.5,
                 # "top_p": 1,
-                "repetition_penalty": 1.1,
+                # "repetition_penalty": 1.1,
                 # "top_k": 40,
                 # "typical_p": 1,
-                "truncate": None,
+                # "truncate": None,
             },
             "options": {
                 "use_cache": True,
@@ -75,16 +75,33 @@ class HuggingFaceLlm(LlmProviderAbstract):
         }
         model_name = self.model_name or \
             os.environ.get("HUGGINGFACE_MODEL_NAME")
-        api_key = self.api_key or \
-            os.environ.get("HUGGINGFACE_API_KEY")
         response_raw = self.hf_query(
             repo_id=model_name,
             payload=model_params,
-            api_key=api_key,
         )
-        log_debug("huggingface_query | " +
-                  f"response_raw: {response_raw}", debug=DEBUG)
-        response['response'] = response_raw['message']['content']
+        log_debug(
+            "huggingface_query | " +
+            f"response_raw BEFORE CONVERSION: {response_raw}",
+            debug=DEBUG)
+        try:
+            response_raw = response_raw.json()
+            log_debug(
+                "huggingface_query | " +
+                f"response_raw AFTER CONVERSION: {response_raw}",
+                debug=DEBUG)
+            if response_raw.get('error'):
+                return error_resultset(
+                    error_message=response_raw['error'],
+                    message_code='HF-E010',
+                )
+            response['response'] = response_raw['message']['content']
+        except requests.exceptions.JSONDecodeError:
+            response['response'] = response_raw.text
+        except Exception as e:
+            return error_resultset(
+                error_message=f"ERROR {e}",
+                message_code='HF-E020',
+            )
         response['refined_prompt'] = pam_response['refined_prompt']
         return response
 
@@ -100,8 +117,10 @@ class HuggingFaceLlm(LlmProviderAbstract):
             Any: HuggingFace response
         """
         # https://huggingface.co/docs/api-inference/detailed_parameters
+        api_key = self.api_key or \
+            os.environ.get("HUGGINGFACE_API_KEY")
         headers = {
-            "Authorization": f"Bearer {os.environ.get('HUGGINGFACE_API_KEY')}",
+            "Authorization": f"Bearer {api_key}",
         }
         base_url = os.environ.get(
             "HUGGINGFACE_API_URL",
@@ -114,6 +133,18 @@ class HuggingFaceImageGen(HuggingFaceLlm):
     """
     HuggingFace Image Generation class
     """
+    def query(
+        self,
+        prompt: str,
+        question: str,
+        prompt_enhancement_text: str = None,
+        unified: bool = False,
+    ) -> dict:
+        return self.query_from_text_model(
+            prompt,
+            question,
+            prompt_enhancement_text,
+            unified)
 
     def image_gen(
         self,

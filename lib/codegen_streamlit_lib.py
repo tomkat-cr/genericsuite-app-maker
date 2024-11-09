@@ -214,10 +214,18 @@ class StreamlitLib:
         Get suggestions from the AI
         """
         result = get_default_resultset()
-        if not self.get_llm_provider():
+        llm_provider = self.get_llm_provider(
+            "LLM_PROVIDERS",
+            "llm_provider"
+        )
+        llm_model = self.get_llm_model(
+            "LLM_PROVIDERS", "llm_provider",
+            "LLM_AVAILABLE_MODELS", "llm_model"
+        )
+        if not llm_provider:
             result["error"] = True
             result["error_message"] = "LLM Provider not selected"
-        if not self.get_llm_model():
+        if not llm_model:
             result["error"] = True
             result["error_message"] = "LLM Model not selected"
         if result["error"]:
@@ -226,8 +234,8 @@ class StreamlitLib:
             return result
         llm_model = LlmProvider({
             # "provider": self.get_par_or_env("LLM_PROVIDER"),
-            "provider": self.get_llm_provider(),
-            "model_name": self.get_llm_model(),
+            "provider": llm_provider,
+            "model_name": llm_model,
         })
         llm_response = llm_model.query(prompt, qty)
         log_debug("get_suggestions_from_ai | " +
@@ -434,14 +442,16 @@ class StreamlitLib:
                     for url in conversation['answer']:
                         container.video(url)
                 else:
-                    container.video(conversation['answer'])
+                    with container.container():
+                        st.write(f"Video URL: {conversation['answer']}")
+                        st.video(conversation['answer'])
             else:
                 self.video_generation(
                     result_container=container,
                     question=conversation['question'],
                     previous_response=conversation['ttv_response'])
 
-        if conversation['type'] == "image":
+        elif conversation['type'] == "image":
             if conversation.get('answer'):
                 # Check for list type entries, and show them individually
                 if isinstance(conversation['answer'], list):
@@ -623,8 +633,9 @@ class StreamlitLib:
         col_index = 0
         for button in buttons_config:
             extra_kwargs = {}
-            if button.get("on_change", None):
-                extra_kwargs["on_change"] = button["on_change"]
+            for key in ["on_change", "on_click", "args"]:
+                if button.get(key, None):
+                    extra_kwargs[key] = button[key]
             if button.get("enable_config_name", None):
                 with col[col_index]:
                     if self.get_par_value(button["enable_config_name"], True):
@@ -653,9 +664,6 @@ class StreamlitLib:
         """
         Returns the LLM provider
         """
-        # if "llm_provider" not in st.session_state:
-        #     return self.get_par_value("LLM_PROVIDER")
-        # return st.session_state.llm_provider
         if session_state_key not in st.session_state:
             return self.get_par_value(param_name)[0]
         return st.session_state.get(session_state_key)
@@ -670,16 +678,6 @@ class StreamlitLib:
         """
         Returns the LLM model
         """
-        # if "llm_model" not in st.session_state:
-        #     llm_provider = self.get_llm_provider()
-        #     if not llm_provider:
-        #         return None
-        #     llm_models = self.get_par_value(
-        #         "LLM_AVAILABLE_MODELS").get(llm_provider, [])
-        #     if not llm_models:
-        #         return None
-        #     return llm_models[0]
-        # return st.session_state.llm_model
         if session_state_key not in st.session_state:
             llm_provider = self.get_llm_provider(
                 parent_param_name, parent_session_state_key)
@@ -706,8 +704,6 @@ class StreamlitLib:
         if not llm_provider:
             return []
         return self.get_par_value(param_name, {}).get(llm_provider, [])
-        # return self.get_par_value(
-        #     "LLM_AVAILABLE_MODELS").get(llm_provider, [])
 
     def get_llm_provider_index(
         self,
@@ -749,14 +745,53 @@ class StreamlitLib:
             llm_model_index = 0
         return llm_model_index
 
-    def prompt_enhancement(self):
+    def prompt_enhancement(self, session_state_key: str):
         """
         Prompt enhancement checkbox callback
+            Note: session_state_key could be something like
+            "prompt_enhancement_XX"
         """
         st.session_state.prompt_enhancement_flag = False
-        if "prompt_enhancement" in st.session_state:
-            if st.session_state.prompt_enhancement:
+        if session_state_key in st.session_state:
+            if st.session_state.get(session_state_key):
                 st.session_state.prompt_enhancement_flag = True
+
+    def use_response_as_prompt(self, session_state_key: str):
+        """
+        Use response as prompt button callback.
+            Note: session_state_key could be something like
+            "use_response_as_prompt_XX"
+        """
+        st.session_state.use_response_as_prompt_flag = False
+        if session_state_key in st.session_state:
+            if st.session_state.get(session_state_key):
+                st.session_state.use_response_as_prompt_flag = True
+
+    def get_llm_text_model(self):
+        """
+        Returns the LLM text model
+        """
+        result = get_default_resultset()
+        result["llm_provider"] = self.get_llm_provider(
+            "LLM_PROVIDERS",
+            "llm_provider"
+        )
+        result["llm_model"] = self.get_llm_model(
+            "LLM_PROVIDERS", "llm_provider",
+            "LLM_AVAILABLE_MODELS", "llm_model"
+        )
+        if not result["llm_provider"]:
+            result["error"] = True
+            result["error_message"] = "LLM Provider not selected"
+        elif not result["llm_model"]:
+            result["error"] = True
+            result["error_message"] = "LLM Model not selected"
+        else:
+            result["class"] = LlmProvider({
+                "provider": result["llm_provider"],
+                "model_name": result["llm_model"],
+            })
+        return result
 
     def text_generation(self, result_container: st.container,
                         question: str = None):
@@ -764,37 +799,34 @@ class StreamlitLib:
             question = st.session_state.question
         if not self.validate_question(question):
             return
-        if not self.get_llm_provider():
+        llm_text_model_elements = self.get_llm_text_model()
+        if llm_text_model_elements['error']:
             result_container.write(
-                "ERROR E-100-A: LLM Provider not selected")
+                f"ERROR E-100-A: {llm_text_model_elements['error_message']}")
             return
-        if not self.get_llm_model():
-            result_container.write(
-                "ERROR E-100-B: LLM Model not selected")
-            return
-
+        other_data = {
+            "ai_provider": llm_text_model_elements['llm_provider'],
+            "ai_model": llm_text_model_elements['llm_model'],
+        }
         with st.spinner("Procesing text generation..."):
             # Generating answer
-            llm_model = LlmProvider({
-                # "provider": self.get_par_or_env("LLM_PROVIDER"),
-                "provider": self.get_llm_provider(),
-                "model_name": self.get_llm_model(),
-            })
+            llm_text_model = llm_text_model_elements['class']
+
             prompt = "{question}"
-            response = llm_model.query(
+            response = llm_text_model.query(
                 prompt, question,
                 (self.get_par_value("REFINE_LLM_PROMPT_TEXT") if
                  st.session_state.prompt_enhancement_flag else None)
             )
             if response['error']:
-                result_container.write(
+                other_data["error_message"] = (
                     f"ERROR E-100: {response['error_message']}")
-                return
             self.save_conversation(
                 type="text",
                 question=question,
-                refined_prompt=response['refined_prompt'],
-                answer=response['response'],
+                refined_prompt=response.get('refined_prompt'),
+                answer=response.get('response'),
+                other_data=other_data,
             )
             # result_container.write(response['response'])
             st.rerun()
@@ -805,11 +837,31 @@ class StreamlitLib:
             question = st.session_state.question
         if not self.validate_question(question):
             return
-
-        other_data = {}
+        llm_provider = self.get_llm_provider(
+            "TEXT_TO_IMAGE_PROVIDERS",
+            "image_provider"
+        )
+        llm_model = self.get_llm_model(
+            "TEXT_TO_IMAGE_PROVIDERS", "image_provider",
+            "TEXT_TO_IMAGE_AVAILABLE_MODELS", "image_model"
+        )
+        llm_text_model_elements = self.get_llm_text_model()
+        if llm_text_model_elements['error']:
+            result_container.write(
+                f"ERROR E-100-B: {llm_text_model_elements['error_message']}")
+            return
+        other_data = {
+            "ai_provider": llm_provider,
+            "ai_model": llm_model,
+            "ai_text_model_provider": llm_text_model_elements['llm_provider'],
+            "ai_text_model_model": llm_text_model_elements['llm_model'],
+        }
         with st.spinner("Procesing image generation..."):
             llm_model = ImageGenProvider({
-                "provider": self.get_par_or_env("TEXT_TO_IMAGE_PROVIDER"),
+                # "provider": self.get_par_or_env("TEXT_TO_IMAGE_PROVIDER"),
+                "provider": llm_provider,
+                "model_name": llm_model,
+                "text_model_class": llm_text_model_elements['class'],
             })
             response = llm_model.image_gen(
                 question,
@@ -824,8 +876,8 @@ class StreamlitLib:
             self.save_conversation(
                 type="image",
                 question=question,
-                refined_prompt=response['refined_prompt'],
-                answer=response['response'],
+                refined_prompt=response.get('refined_prompt'),
+                answer=response.get('response'),
                 other_data=other_data,
             )
             # result_container.write(response['response'])
@@ -837,8 +889,26 @@ class StreamlitLib:
         question: str = None,
         previous_response: dict = None
     ):
+        llm_provider = self.get_llm_provider(
+            "TEXT_TO_VIDEO_PROVIDERS",
+            "video_provider"
+        )
+        llm_model = self.get_llm_model(
+            "TEXT_TO_VIDEO_PROVIDERS", "video_provider",
+            "TEXT_TO_VIDEO_AVAILABLE_MODELS", "video_model"
+        )
+
+        llm_text_model_elements = self.get_llm_text_model()
+        if llm_text_model_elements['error']:
+            result_container.write(
+                f"ERROR E-100-C: {llm_text_model_elements['error_message']}")
+            return
+
         ttv_model = TextToVideoProvider({
-            "provider": self.get_par_or_env("TEXT_TO_VIDEO_PROVIDER"),
+            # "provider": self.get_par_or_env("TEXT_TO_VIDEO_PROVIDER"),
+            "provider": llm_provider,
+            "model_name": llm_model,
+            "text_model_class": llm_text_model_elements['class'],
         })
         if previous_response:
             response = previous_response.copy()
@@ -872,11 +942,16 @@ class StreamlitLib:
             # follow-up data in the ttv_response attribute
             other_data = {
                 "ttv_response": ttv_response,
+                "ai_provider": llm_provider,
+                "ai_model": llm_model,
+                "ai_text_model_provider":
+                    llm_text_model_elements['llm_provider'],
+                "ai_text_model_model": llm_text_model_elements['llm_model'],
             }
             self.save_conversation(
                 type="video",
                 question=question,
-                refined_prompt=ttv_response['refined_prompt'],
+                refined_prompt=ttv_response.get('refined_prompt'),
                 answer=video_url,
                 other_data=other_data,
                 id=video_id,
@@ -905,7 +980,7 @@ class StreamlitLib:
             self.save_conversation(
                 type="video",
                 question=question,
-                refined_prompt=ttv_response['refined_prompt'],
+                refined_prompt=ttv_response.get('refined_prompt'),
                 answer=video_url,
                 other_data=other_data,
                 id=video_id,
