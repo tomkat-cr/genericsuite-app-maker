@@ -1,0 +1,105 @@
+{
+    "APP_NAME": "GSAM",
+    "APP_VERSION": "0.1.0",
+    "MAKER_MAME": "The FynBots",
+    "APP_ICON": ":sparkles:",
+    "APP_DESCRIPTION": "The GenericSuite App Maker (GSAM) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the GenericSuite libraries.",
+    "CONVERSATION_DB_PATH": "./db/conversations.json",
+    "DEFAULT_PAGE": "home",
+    "CODE_GENERATION_ENABLED": true,
+    "TEXT_GENERATION_ENABLED": true,
+    "VIDEO_GENERATION_ENABLED": true,
+    "IMAGE_GENERATION_ENABLED": true,
+    "CONVERSATION_TITLE_LENGTH": 50,
+    "VIDEO_GALLERY_COLUMNS": 3,
+    "IMAGE_GALLERY_COLUMNS": 3,
+    "DEFAULT_SUGGESTIONS": {
+        "s1": "Give me ideas to develop a web application about...",
+        "s2": "Give me catchy names for a web application about...",
+        "s3": "Give me a README file content for an application about...",
+        "s4": "Give me the ReactJs code for a AI Assistant, using Shadcn/UI"
+    },
+    "DYNAMIC_SUGGESTIONS": false,
+    "SUGGESTIONS_PROMPT_TEXT": "[suggestions_prompt_text.txt]",
+    "SUGGESTIONS_PROMPT_SUFFIX": "[suggestions_prompt_suffix.txt]",
+    "SUGGESTIONS_QTY": 4,
+    "REFINE_VIDEO_PROMPT_TEXT": "[refine_video_prompt.txt]",
+    "REFINE_LLM_PROMPT_TEXT": "[refine_llm_prompt.txt]",
+    "LLM_PROVIDERS_COMPLETE_LIST": [
+        "chat_openai",
+        "groq",
+        "ollama",
+        "rhymes",
+        "nvidia",
+        "huggingface",
+        "together_ai"
+    ],
+    "NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS": [
+        "nvidia"
+    ],
+    "NO_SYSTEM_PROMPT_ALLOWED_MODELS": [
+        "o1-preview",
+        "o1-mini"
+    ],
+    "LLM_PROVIDERS": [
+        "together_ai",
+        "groq"
+    ],
+    "LLM_AVAILABLE_MODELS": {
+        "chat_openai": [
+            "gpt-4o",
+            "gpt-4o-mini"
+        ],
+        "groq": [
+            "llama3-groq-70b-8192-tool-use-preview",
+            "llama3-8b-8192",
+            "mixtral-8x7b-32768"
+        ],
+        "ollama": [
+            "llama3.2",
+            "llava",
+            "deepseek-coder-v2",
+            "nemotron"
+        ],
+        "rhymes": [
+            "aria"
+        ],
+        "nvidia": [
+            "nvidia/llama-3.1-nemotron-70b-instruct"
+        ],
+        "huggingface": [
+            "meta-llama/Meta-Llama-3.1-8B-Instruct",
+            "mistralai/Mistral-7B-Instruct-v0.2"
+        ],
+        "together_ai": [
+            "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+        ]
+    },
+    "TEXT_TO_IMAGE_PROVIDERS": [
+        "huggingface",
+        "openai"
+    ],
+    "TEXT_TO_IMAGE_AVAILABLE_MODELS": {
+        "openai": [
+            "dall-e-3"
+        ],
+        "huggingface":[
+            "black-forest-labs/FLUX.1-schnell",
+            "black-forest-labs/FLUX.1-dev"
+        ]
+    },
+    "TEXT_TO_VIDEO_PROVIDERS": [
+        "rhymes"
+    ],
+    "TEXT_TO_VIDEO_AVAILABLE_MODELS": {
+        "rhymes": [
+            "allegro"
+        ]
+    },
+    "START_APP_CODE_ENABLED": false,
+    "ADD_ATTACHMENTS_ENABLED": false,
+    "GENERATE_VIDEO_SCRIPT_ENABLED": false
+}
