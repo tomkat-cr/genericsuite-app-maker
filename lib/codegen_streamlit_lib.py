@@ -5,6 +5,7 @@ from typing import Any
 import os
 import time
 import json
+import uuid
 
 import streamlit as st
 
@@ -21,9 +22,28 @@ from lib.codegen_ai_utilities import (
     LlmProvider,
     ImageGenProvider,
 )
+from lib.codegen_powerpoint import PowerPointGenerator
 
 
 DEBUG = True
+
+
+@st.dialog("Form validation")
+def show_popup(title: str, message: str, msg_type: str = "success"):
+    """
+    Show a streamlit popup with a message
+    """
+    message = message.replace("\n", "<br>")
+    message = message.replace("\r", "<br>")
+    st.header(f"{title}")
+    if msg_type == "success":
+        st.success(message)
+    elif msg_type == "error":
+        st.error(message)
+    elif msg_type == "info":
+        st.info(message)
+    elif msg_type == "warning":
+        st.warning(message)
 
 
 class StreamlitLib:
@@ -39,8 +59,8 @@ class StreamlitLib:
         """
         Set the new id global variable
         """
-        if "new_id" not in st.session_state:
-            st.session_state.new_id = None
+        # if "new_id" not in st.session_state:
+        #     st.session_state.new_id = None
         st.session_state.new_id = id
 
     def get_new_id(self):
@@ -136,6 +156,17 @@ class StreamlitLib:
         Update the side bar conversations from the database
         """
         st.session_state.conversations = self.get_conversations()
+
+    def update_conversation(
+        self,
+        item: dict = None,
+        id: str = None
+    ):
+        db = self.init_db()
+        log_debug(f"UPDATE_CONVERSATION | id: {id} | item: {item}",
+                  debug=DEBUG)
+        db.save_item(item, id)
+        self.set_new_id(id)
 
     def save_conversation(
         self, type: str,
@@ -430,10 +461,10 @@ class StreamlitLib:
         if not conversation:
             container.write("ERROR E-600: Conversation not found")
             return
-        log_debug(
-            "SHOW_CONVERSATION_CONTENT | " +
-            f"\n | conversation: {conversation}", debug=DEBUG
-        )
+        # log_debug(
+        #     "SHOW_CONVERSATION_CONTENT | " +
+        #     f"\n | conversation: {conversation}", debug=DEBUG
+        # )
         if conversation.get('refined_prompt'):
             with additional_container.expander(
                  f"Enhanced Prompt for {conversation['type'].capitalize()}"):
@@ -480,6 +511,31 @@ class StreamlitLib:
             with container.container():
                 self.show_conversation_debug(conversation)
                 st.write(conversation['answer'])
+                if conversation.get("subtype"):
+                    if conversation["subtype"] in [
+                        "generate_presentation",
+                        "generate_app_presentation"
+                    ]:
+                        extra_button_text = ""
+                        if conversation.get("presentation_file_path"):
+                            extra_button_text = " again"
+                        st.button(
+                            f"Generate Presentation{extra_button_text}",
+                            on_click=self.create_pptx,
+                            args=(conversation,))
+                        if conversation.get("presentation_file_path"):
+                            with open(conversation["presentation_file_path"],
+                                      "rb") as pptx_file:
+                                st.download_button(
+                                    label="Download Presentation",
+                                    data=pptx_file,
+                                    file_name=os.path.basename(
+                                        conversation["presentation_file_path"]
+                                    ),
+                                    # mime="application/vnd.openxmlformats"
+                                    #      "-officedocument.presentationml"
+                                    #      ".presentation",
+                                )
 
     def show_conversation_question(self, id: str):
         if not id:
@@ -489,6 +545,16 @@ class StreamlitLib:
             st.session_state.question = "ERROR E-700: Conversation not found"
         else:
             st.session_state.question = conversation['question']
+            if conversation.get("form_data"):
+                form_session_state_key = \
+                    self.get_form_session_state_key(conversation)
+                st.session_state[form_session_state_key] = \
+                    conversation["form_data"]
+                # log_debug("SHOW_CONVERSATION_QUESTION | "
+                #           f"session_state_key: {form_session_state_key} | "
+                #           "form_data: "
+                #           f"{st.session_state[form_session_state_key]}",
+                #           debug=DEBUG)
 
     def validate_question(self, question: str):
         """
@@ -608,6 +674,7 @@ class StreamlitLib:
                     "type": "checkbox",
                 }
         """
+        submitted = None
         button_type = button_config.get("type", "button")
         if button_type == "checkbox":
             container.checkbox(
@@ -616,14 +683,22 @@ class StreamlitLib:
                 **extra_kwargs)
         elif button_type == "spacer":
             container.write(button_config.get("text", ""))
+        elif button_type == "submit":
+            submitted = container.form_submit_button(
+                button_config["text"])
         else:
             # Defaults to button
             container.button(
                 button_config["text"],
                 key=button_config["key"],
                 **extra_kwargs)
+        return submitted
 
-    def show_buttons_row(self, buttons_config: list):
+    def show_buttons_row(
+        self,
+        buttons_config: list,
+        fill_missing_spaces: bool = False
+    ):
         """
         Show buttons based on the buttons_config
         Args:
@@ -647,6 +722,7 @@ class StreamlitLib:
         """
         col = st.columns(len(buttons_config))
         col_index = 0
+        submitted = []
         for button in buttons_config:
             extra_kwargs = {}
             for key in ["on_change", "on_click", "args"]:
@@ -655,20 +731,249 @@ class StreamlitLib:
             if button.get("enable_config_name", None):
                 with col[col_index]:
                     if self.get_par_value(button["enable_config_name"], True):
+                        submitted.append(
+                            self.show_button_of_type(
+                                button,
+                                extra_kwargs,
+                                col[col_index]))
+                        col_index += 1
+                    else:
+                        if fill_missing_spaces:
+                            st.write("")
+                            col_index += 1
+            else:
+                with col[col_index]:
+                    submitted.append(
                         self.show_button_of_type(
                             button,
                             extra_kwargs,
-                            col[col_index])
-                    else:
-                        st.write("")
-                col_index += 1
-            else:
-                with col[col_index]:
-                    self.show_button_of_type(
-                        button,
-                        extra_kwargs,
-                        col[col_index])
+                            col[col_index]))
                     col_index += 1
+        return submitted
+
+    def get_buttons_submitted_data(self, buttons_submitted: list,
+                                   buttons_data: dict):
+        """
+        Reduce the list of buttons submitted to a single boolean value
+        to determine if the form was submitted
+        """
+        submitted = any(buttons_submitted)
+
+        # log_debug(f"buttons_submitted: {buttons_submitted}", debug=DEBUG)
+
+        buttons_submitted_data = {}
+        if submitted:
+            # Get the button submitted values
+            # and create a dictionary with the form data
+
+            curr_item = 0
+            for i in range(len(buttons_data)):
+                if buttons_data[i].get("type") == "submit":
+                    if buttons_data[i].get("enable_config_name", None):
+                        if self.get_par_value(
+                                buttons_data[i]["enable_config_name"], True):
+                            # log_debug(f"buttons_data[{i}]: {buttons_data[i]}"
+                            #     f" -> {buttons_submitted[curr_item]}",
+                            buttons_submitted_data[buttons_data[i]["key"]] = \
+                                buttons_submitted[curr_item]
+                            curr_item += 1
+                    else:
+                        # log_debug(f"buttons_data[{i}]: {buttons_data[i]} "
+                        #     f"-> {buttons_submitted[curr_item]}",
+                        #     debug=DEBUG)
+                        buttons_submitted_data[buttons_data[i]["key"]] = \
+                            buttons_submitted[curr_item]
+                        curr_item += 1
+        return buttons_submitted_data
+
+    def get_option_index(self, options: list, value: str):
+        """
+        Returns the index of the option in the list
+        """
+        for i, option in enumerate(options):
+            if option == value:
+                return i
+        return 0
+
+    def show_form_fields(self, fields_data: dict, form_data: dict):
+        """
+        Show the form
+        """
+        fields_values = {}
+        for key in fields_data:
+            field = fields_data.get(key)
+            if not field.get("enabled", True):
+                continue
+            value = form_data.get(key, "")
+            if field.get("type") == "radio":
+                field_value = st.radio(
+                    field.get("title"),
+                    field.get("options", []),
+                    # key=key,  # If this is st, the value is not assigned
+                    help=field.get("help"),
+                    index=self.get_option_index(
+                        options=field.get("options", []),
+                        value=value),
+                )
+            elif field.get("type") == "text":
+                field_value = st.text_input(
+                    field.get("title"),
+                    value,
+                    # key=key,  # If this is st, the value is not assigned
+                    help=field.get("help"),
+                )
+            else:
+                field_value = st.text_area(
+                    field.get("title"),
+                    value,
+                    # key=key,  # If this is st, the value is not assigned
+                    help=field.get("help"),
+                )
+            fields_values[key] = field_value
+        return fields_values
+
+    def show_form_error(self, message: str):
+        """
+        Show a form submission error
+        """
+        show_popup(
+            title="The following error(s) were found:",
+            message=message,
+            msg_type="error")
+
+    def add_buttons_and_return_submitted(self, buttons_config: list):
+        """
+        Add the buttons to the page, then returns the submitted buttons and the
+        buttons configuration
+        """
+        with st.container():
+            submitted = self.show_buttons_row(buttons_config)
+            return submitted, buttons_config
+
+    def get_selected_feature(self, form: dict, features_data: dict):
+        """
+        Returns the selected feature
+        """
+        selected_feature = None
+        for key in form.get("buttons_submitted_data"):
+            for feature in features_data:
+                if form["buttons_submitted_data"].get(key) and \
+                        key == feature:
+                    selected_feature = feature
+                    break
+        return selected_feature
+
+    def get_form_name(self, form_config: dict):
+        """
+        Returns the form session state key
+        """
+        form_name = form_config.get("name", "application_form")
+        return f"{form_name}"
+
+    def get_form_session_state_key(self, form_config: dict):
+        """
+        Returns the form session state key
+        """
+        form_name = self.get_form_name(form_config)
+        form_session_state_key = form_config.get(
+            "form_session_state_key",
+            f"{form_name}_data")
+        return form_session_state_key
+
+    def show_form(self, container: st.container, form_config: dict):
+        """
+        Show the configured form
+        """
+        form_name = self.get_form_name(form_config)
+        form_session_state_key = self.get_form_session_state_key(form_config)
+        if form_session_state_key not in st.session_state:
+            st.session_state[form_session_state_key] = {}
+        form_data = st.session_state[form_session_state_key]
+
+        fields_data = form_config.get("fields", {})
+
+        # Clear the form data if it's not the first time the form is shown
+        if form_name in st.session_state:
+            del st.session_state[form_name]
+
+        with container.form(form_name):
+            st.title(form_config.get("title", "Application Form"))
+
+            if form_config.get("subtitle"):
+                st.write(form_config.get("subtitle"))
+
+            fields_values = self.show_form_fields(fields_data, form_data)
+
+            if form_config.get("suffix"):
+                st.write(form_config.get("suffix"))
+
+            func = form_config.get(
+                "buttons_function",
+                self.add_buttons_and_return_submitted)
+            if form_config.get("buttons_config"):
+                buttons_submitted, buttons_data = func(
+                    form_config["buttons_config"])
+            else:
+                buttons_submitted, buttons_data = [], []
+
+        buttons_submitted_data = self.get_buttons_submitted_data(
+            buttons_submitted,
+            buttons_data)
+        if not buttons_submitted_data:
+            return None
+
+        st.session_state[form_session_state_key] = dict(fields_values)
+        st.session_state[form_session_state_key].update({
+            "buttons_submitted_data": buttons_submitted_data
+        })
+        return st.session_state[form_session_state_key]
+
+    # PPTX generation
+
+    def create_pptx(self, conversation: dict):
+        """
+        Generates the PowerPoint slides
+        """
+        log_debug("CREATE_PPTX | enters...", debug=DEBUG)
+        pptx_generator = PowerPointGenerator({
+            "output_dir": self.params.get("output_dir", "./output"),
+            "file_name": uuid.uuid4(),
+        })
+        answer = conversation.get("answer")
+        if not answer:
+            error_message = "Conversation answer is empty"
+            log_debug(f"CREATE_PPTX | ERROR 1: {error_message}...",
+                      debug=DEBUG)
+            st.write(error_message)
+            return
+        if "```json" in answer:
+            # Find the first occurrence of ```json, cut the text before it,
+            # and remove the ```json and ``` characters
+            answer = answer.split("```json")[1].replace("```json", "")
+            answer = answer.replace("```", "")
+        try:
+            log_debug("CREATE_PPTX | answer:"
+                      f" {answer}", debug=DEBUG)
+            slides_config = json.loads(answer)
+            log_debug("CREATE_PPTX | slides_config:"
+                      f" {slides_config}", debug=DEBUG)
+        except Exception as e:
+            error_message = f"ERROR {e}"
+            st.write(error_message)
+            log_debug(f"CREATE_PPTX | ERROR 2: {error_message}...",
+                      debug=DEBUG)
+            return
+
+        log_debug("CREATE_PPTX | creating presentation...", debug=DEBUG)
+
+        result_file_path = pptx_generator.generate(slides_config)
+
+        log_debug("CREATE_PPTX | result_file_path: "
+                  f"{result_file_path}", debug=DEBUG)
+
+        conversation["presentation_file_path"] = result_file_path
+        self.update_conversation(conversation, conversation["id"])
+        return result_file_path
 
     # AI
 
@@ -804,20 +1109,22 @@ class StreamlitLib:
         return result
 
     def text_generation(self, result_container: st.container,
-                        question: str = None):
+                        question: str = None, other_data: dict = None):
         if not question:
             question = st.session_state.question
         if not self.validate_question(question):
             return
+        if not other_data:
+            other_data = {}
         llm_text_model_elements = self.get_llm_text_model()
         if llm_text_model_elements['error']:
             result_container.write(
                 f"ERROR E-100-A: {llm_text_model_elements['error_message']}")
             return
-        other_data = {
+        other_data.update({
             "ai_provider": llm_text_model_elements['llm_provider'],
             "ai_model": llm_text_model_elements['llm_model'],
-        }
+        })
         with st.spinner("Procesing text generation..."):
             # Generating answer
             llm_text_model = llm_text_model_elements['class']

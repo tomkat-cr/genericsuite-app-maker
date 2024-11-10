@@ -1,7 +1,9 @@
-# from typing import Optional, List, Mapping, Any
-# from llama_index.core import SimpleDirectoryReader, SummaryIndex
-# from llama_index.core.callbacks import CallbackManager
-# from llama_index.core import Settings
+"""
+LlamaIndex abstraction
+
+Reference:
+https://docs.llamaindex.ai/en/stable/module_guides/models/llms/usage_custom/#example-using-a-custom-llm-model-advanced
+"""
 
 from typing import Any
 from llama_index.core.llms import (
@@ -62,20 +64,3 @@ class LlamaIndexCustomLLM(CustomLLM):
         if llm_response['error']:
             raise ValueError(f'ERROR: {llm_response["error_message"]}')
         return llm_response['response']
-
-
-# # define our LLM
-# Settings.llm = LlamaIndexCustomLLM()
-
-# # define embed model
-# Settings.embed_model = "local:BAAI/bge-base-en-v1.5"
-
-
-# # Load the your data
-# documents = SimpleDirectoryReader("./data").load_data()
-# index = SummaryIndex.from_documents(documents)
-
-# # Query and print response
-# query_engine = index.as_query_engine()
-# response = query_engine.query("<query_text>")
-# print(response)

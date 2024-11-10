@@ -98,20 +98,35 @@ def read_file(file_path, params: dict = None):
         # "./output" is the default output directory if the output_dir
         # parameter is not provided
         output_dir = params.get("output_dir", "./output")
-        # If the output_dir path does not exist, create it
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
         if params.get("file_name"):
             file_name = params.get("file_name")
         else:
             file_name = os.path.basename(file_path)
-        target_file_path = f"{output_dir}/{file_name}"
-        log_debug(f"READ_FILE | Saving file: {target_file_path}", debug=DEBUG)
-        with open(target_file_path, 'w') as f:
-            f.write(content)
-            f.close()
+        target_file_path = save_file(output_dir, file_name)
         return f"[{target_file_path}]"
     return content
+
+
+def create_dirs(output_dir: str):
+    """
+    Creates the output directory if it doesn't exist
+    """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+
+def save_file(output_dir: str, file_name: str, content: Any):
+    """
+    Saves the file to the output directory
+    """
+    # If the output_dir path does not exist, create it
+    create_dirs(output_dir)
+    target_file_path = f"{output_dir}/{file_name}"
+    log_debug(f"READ_FILE | Saving file: {target_file_path}", debug=DEBUG)
+    with open(target_file_path, 'w') as f:
+        f.write(content)
+        f.close()
+    return target_file_path
 
 
 def read_config_file(file_path: str):

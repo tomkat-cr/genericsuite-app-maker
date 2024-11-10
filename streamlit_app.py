@@ -1,14 +1,21 @@
 """
 VitexBrain App
 """
+import os
 from dotenv import load_dotenv
 import streamlit as st
 
 from lib.codegen_streamlit_lib import StreamlitLib
 from lib.codegen_utilities import get_app_config
-# from lib.codegen_utilities import log_debug
+from lib.codegen_utilities import log_debug
 
 from src.codegen_schema_generator import JsonGenerator
+from src.codegen_app_ideation import (
+    show_ideation_form,
+    # get_features_data,
+    # get_fields_data,
+    get_form_config,
+)
 
 
 DEBUG = True
@@ -62,7 +69,8 @@ def process_json_and_code_generation(
             type="text",
             question=question,
             refined_prompt=response.get('refined_prompt'),
-            answer=response.get('response',
+            answer=response.get(
+                'response',
                 "No response. Check the Detailed Response section."),
             other_data=other_data,
         )
@@ -81,7 +89,120 @@ def process_use_response_as_prompt():
     st.session_state.use_response_as_prompt_flag = False
 
 
+def process_ideation_form(form: dict):
+    """
+    Process the ideation form
+    """
+    result_container = st.empty()
+    log_debug("process_ideation_form | form: " + f"{form}", debug=DEBUG)
+
+    form_config = get_form_config()
+    features_data = form_config.get("features_data", {})
+    fields_data = form_config.get("fields", {})
+
+    # Validates the submitted form
+    if not form:
+        cgsl.show_form_error("Invalid form")
+        return
+    if not form.get("buttons_submitted_data"):
+        cgsl.show_form_error("Missing buttons submitted data")
+        return
+
+    # Verify button pressed
+    selected_feature = cgsl.get_selected_feature(form, features_data)
+    if not selected_feature:
+        cgsl.show_form_error("No button pressed... try again please")
+        return
+
+    # Verify mandatory field
+    error_message = ""
+    for key in features_data.get(selected_feature).get("mandatory_fields"):
+        if not form.get(key):
+            field_name = fields_data.get(key, {}).get("title", key)
+            error_message += f"{field_name}, "
+    if error_message:
+        error_message = error_message[:-2]
+        cgsl.show_form_error(f"Missing field(s): {error_message}")
+        return
+
+    template = features_data.get(selected_feature).get("template")
+    if not template:
+        cgsl.show_form_error("Missing template")
+        return
+
+    # Read the template file
+    template_path = f"./config/{template}"
+    if not os.path.exists(template_path):
+        cgsl.show_form_error(f"Missing template file: {template_path}")
+        return
+    with open(template_path, "r") as f:
+        question = f.read()
+
+    # Replace the placeholders with the user input
+    final_form = {}
+    for key in form:
+        if key in [
+            "screenshots",
+            "buttons_submitted_data",
+            "buttons_submitted"
+        ]:
+            continue
+        log_debug(f"process_ideation_form | key: {key} | "
+                  f"form[key]: {form[key]}", debug=DEBUG)
+        final_form[key] = form[key]
+        if form[key]:
+            question = question.replace(f"{{{key}}}", form[key])
+
+    form_name = cgsl.get_form_name(form_config)
+    form_session_state_key = cgsl.get_form_session_state_key(form_config)
+    other_data = {
+        "subtype": selected_feature,
+        "template": template,
+        "form_name": form_name,
+        "form_data": final_form,
+        "form_session_state_key": form_session_state_key,
+    }
+
+    log_debug("process_ideation_form | question: " + f"{question}"
+              "\n | other_data: " + f"{other_data}",
+              debug=DEBUG)
+
+    # Call the LLM to generate the ideation
+    response = cgsl.text_generation(result_container, question, other_data)
+
+    log_debug("process_ideation_form | response: " + f"{response}",
+              debug=DEBUG)
+
+    error_message = None
+    if response['error']:
+        error_message = f"ERROR E-900-B: {response['error_message']}"
+        cgsl.show_form_error(error_message)
+
+    cgsl.save_conversation(
+        type="text",
+        question=question,
+        refined_prompt=response.get('refined_prompt'),
+        answer=response.get(
+            'response',
+            "No response. Check the Detailed Response section."),
+        other_data=other_data,
+    )
+    st.rerun()
+
+
 # UI elements
+
+
+def get_question_label(tab: str = "main"):
+    """
+    Returns the question label based on the tab
+    """
+    label = "Question / Prompt:"
+    if tab == "app_ideation" or tab == "code_gen":
+        label = "App description:"
+    st.session_state.question_label = label
+    return label
+
 
 def add_title():
     """
@@ -230,6 +351,8 @@ def add_attachments():
     """
     Add the attachments section to the page
     """
+    if not cgsl.get_par_value("ADD_ATTACHMENTS_ENABLED", False):
+        return
     with st.expander("Attachments"):
         st.file_uploader(
             "Choose file(s) to be attached to the conversation",
@@ -245,7 +368,7 @@ def add_user_input():
     """
     with st.container():
         question = st.text_area(
-            "Question / Prompt:",
+            st.session_state.question_label,
             st.session_state.question)
     return question
 
@@ -321,41 +444,6 @@ def add_buttons_for_main_tab():
                 "use_response_as_prompt_main_tab"),
             get_prompt_enhancement_button_config(
                 "prompt_enhancement_main_tab"),
-        ]
-        cgsl.show_buttons_row(buttons_config)
-
-
-def add_buttons_for_app_ideation_tab():
-    """
-    Add the app ideation tab buttons section to the page
-    """
-
-    with st.container():
-        buttons_config = [
-            {
-                "text": "Generate App Names",
-                "key": "generate_app_names",
-                "enable_config_name": "GENERATE_APP_NAMES_ENABLED",
-            },
-            {
-                "text": "Generate App Structure",
-                "key": "generate_app_structure",
-                "enable_config_name": "GENERATE_APP_STRUCTURE_ENABLED",
-            },
-            {
-                "text": "Generate Presentation",
-                "key": "generate_presentation",
-                "enable_config_name": "GENERATE_PRESENTATION_ENABLED",
-            },
-            {
-                "text": "Generate Video Script",
-                "key": "generate_video_script",
-                "enable_config_name": "GENERATE_VIDEO_SCRIPT_ENABLED",
-            },
-            get_response_as_prompt_button_config(
-                "use_response_as_prompt_app_ideation_tab"),
-            get_prompt_enhancement_button_config(
-                "prompt_enhancement_app_ideation_tab"),
         ]
         cgsl.show_buttons_row(buttons_config)
 
@@ -438,6 +526,7 @@ def add_check_buttons_pushed(
         result_container: st.container,
         additional_result_container: st.container,
         data_management_container: st.container,
+        parameters_container: st.container,
         question: str):
     """
     Check buttons pushed
@@ -490,6 +579,9 @@ def add_footer():
     st.caption(f"© 2024 {st.session_state.maker_name}. All rights reserved.")
 
 
+# Pages
+
+
 def page_1():
     # Get suggested questions initial value
     with st.spinner("Loading App..."):
@@ -520,16 +612,26 @@ def page_1():
     # User input
     question = add_user_input()
 
+    # Additional parameters SECTION
+    _, parameters_container = add_results_containers()
+
     # Tabs defintion
     tab1, tab2, tab3 = st.tabs(["Main", "App Ideation", "Code Generation"])
+
+    # When a tab is changed, reset the question label
+    # tab1.on_change("active", lambda: get_question_label("main"))
+    # tab2.on_change("active", lambda: get_question_label("app_ideation"))
+    # tab3.on_change("active", lambda: get_question_label("code_gen"))
 
     with tab1:
         # Buttons
         add_buttons_for_main_tab()
 
     with tab2:
-        # Buttons
-        add_buttons_for_app_ideation_tab()
+        # Form
+        form = show_ideation_form(tab2)
+        if form:
+            process_ideation_form(form)
 
     with tab3:
         # Buttons
@@ -552,6 +654,7 @@ def page_1():
         result_container,
         additional_result_container,
         data_management_container,
+        parameters_container,
         question
     )
 
@@ -572,6 +675,9 @@ def page_3():
     cgsl.show_gallery("image")
     # Footer
     add_footer()
+
+
+# Main
 
 
 # Main function to render pages
@@ -595,6 +701,8 @@ def main():
         st.session_state.use_embeddings_flag = True
     if "conversations" not in st.session_state:
         cgsl.update_conversations()
+    if "question_label" not in st.session_state:
+        get_question_label()
 
     # Streamlit app code
     st.set_page_config(

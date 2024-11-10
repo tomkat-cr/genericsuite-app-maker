@@ -74,8 +74,8 @@
         "together_ai": [
             "meta-llama/Llama-3.2-3B-Instruct-Turbo",
             "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-            "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+            "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
         ]
     },
     "TEXT_TO_IMAGE_PROVIDERS": [
@@ -98,5 +98,8 @@
         "rhymes": [
             "allegro"
         ]
-    }
+    },
+    "START_APP_CODE_ENABLED": false,
+    "ADD_ATTACHMENTS_ENABLED": false,
+    "GENERATE_VIDEO_SCRIPT_ENABLED": false
 }

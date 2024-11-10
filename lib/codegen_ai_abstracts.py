@@ -1,8 +1,6 @@
 """
 LLM provider abstract class
 """
-from typing import Any
-
 from lib.codegen_utilities import get_default_resultset
 from lib.codegen_utilities import log_debug
 from lib.codegen_ai_abstracts_constants import DEFAULT_PROMPT_ENHANCEMENT_TEXT
@@ -265,7 +263,8 @@ class LlmProviderAbstract:
             else:
                 unified_prompt = f"{user_input}"
             if unified_prompt and "{question}" in unified_prompt:
-                unified_prompt = unified_prompt.format(question=user_input)
+                unified_prompt = unified_prompt.replace(
+                    "{question}", f"{user_input}")
             messages = [
                 {
                     'role': 'user',
