@@ -20,7 +20,7 @@ cgsl = StreamlitLib(app_config)
 # Code Generator specific
 
 
-def process_generate_json(
+def process_json_and_code_generation(
     result_container: st.container,
     question: str = None
 ):
@@ -32,21 +32,39 @@ def process_generate_json(
     if not cgsl.validate_question(question):
         return
 
+    llm_text_model_elements = cgsl.get_llm_text_model()
+    if llm_text_model_elements['error']:
+        result_container.write(
+            f"ERROR E-100-D: {llm_text_model_elements['error_message']}")
+        return
+    other_data = {
+        "ai_provider": llm_text_model_elements['llm_provider'],
+        "ai_model": llm_text_model_elements['llm_model'],
+        "template": "json_and_code_generation",
+    }
+
     with st.spinner("Procesing code generation..."):
         params = {
             "user_input_text": question,
+            "use_embeddings": st.session_state.use_embeddings_flag,
+            "embeddings_sources_dir": cgsl.get_par_value(
+                "EMBEDDINGS_SOURCES_DIR", "./embeddings_sources"),
+            "provider": llm_text_model_elements['llm_provider'],
+            "model": llm_text_model_elements['llm_model'],
         }
         json_generator = JsonGenerator(params=params)
         response = json_generator.generate_json()
         if response['error']:
-            result_container.write(
+            other_data["error_message"] = (
                 f"ERROR E-100: {response['error_message']}")
-            return
+        other_data.update(response.get('other_data', {}))
         cgsl.save_conversation(
             type="text",
             question=question,
             refined_prompt=response.get('refined_prompt'),
-            answer=response['response'],
+            answer=response.get('response',
+                "No response. Check the Detailed Response section."),
+            other_data=other_data,
         )
         # result_container.write(response['response'])
         st.rerun()
@@ -240,8 +258,9 @@ def get_response_as_prompt_button_config(key_name: str):
         "text": "Use Response as Prompt",
         "key": key_name,
         "enable_config_name": "USE_RESPONSE_AS_PROMPT_ENABLED",
-        "on_click": cgsl.use_response_as_prompt,
-        "args": (key_name,),
+        # "on_click": cgsl.use_response_as_prompt,
+        "on_click": cgsl.set_session_flag,
+        "args": (key_name, "use_response_as_prompt_flag"),
     }
 
 
@@ -253,8 +272,23 @@ def get_prompt_enhancement_button_config(key_name: str):
         "text": "Enhance prompt",
         "key": key_name,
         "type": "checkbox",
-        "on_change": cgsl.prompt_enhancement,
-        "args": (key_name,),
+        # "on_change": cgsl.prompt_enhancement,
+        "on_change": cgsl.set_session_flag,
+        "args": (key_name, "prompt_enhancement_flag"),
+    }
+
+
+def get_use_embeddings_button_config(key_name: str):
+    """
+    Returns the use embeddings button config
+    """
+    return {
+        "text": "Use Embeddings",
+        "key": key_name,
+        "type": "checkbox",
+        "enable_config_name": "USE_EMBEDDINGS_ENABLED",
+        "on_change": cgsl.set_session_flag,
+        "args": (key_name, "use_embeddings_flag"),
     }
 
 
@@ -337,6 +371,9 @@ def add_buttons_for_code_gen_tab():
                 "key": "generate_code",
                 "enable_config_name": "CODE_GENERATION_ENABLED",
             },
+            get_use_embeddings_button_config(
+                "use_embeddings_code_gen_tab",
+            ),
             {
                 "text": "Start App Code",
                 "key": "start_app_code",
@@ -420,7 +457,7 @@ def add_check_buttons_pushed(
 
     # Process the generate_code button pushed
     if st.session_state.get("generate_code"):
-        process_generate_json(result_container, question)
+        process_json_and_code_generation(result_container, question)
 
     # Show the selected conversation's question and answer in the
     # main section
@@ -554,6 +591,8 @@ def main():
         st.session_state.prompt_enhancement_flag = False
     if "use_response_as_prompt_flag" not in st.session_state:
         st.session_state.use_response_as_prompt_flag = False
+    if "use_embeddings_flag" not in st.session_state:
+        st.session_state.use_embeddings_flag = True
     if "conversations" not in st.session_state:
         cgsl.update_conversations()
 

@@ -10,7 +10,10 @@ from lib.codegen_utilities import (
     log_debug,
     get_default_resultset,
 )
-from lib.codegen_ai_abstracts import LlmProviderAbstract
+from lib.codegen_ai_abstracts import (
+    LlmProviderAbstract,
+    prepare_model_params,
+)
 
 
 DEBUG = True
@@ -21,39 +24,18 @@ def get_openai_api_response(model_params: dict, naming: dict = None) -> dict:
     Returns the OpenAI API response for a LLM request
     """
     response = get_default_resultset()
-    naming = naming or {
-        "model_name": "model",
-    }
+    configs = prepare_model_params(model_params, naming)
     # Initialize the OpenAI client
-    client_config = {}
-    for key in ["base_url", "api_key"]:
-        if model_params.get(key):
-            client_config[naming.get(key, key)] = model_params[key]
     try:
-        client = OpenAI(**client_config)
+        client = OpenAI(**configs["client_config"])
     except Exception as e:
         response['error'] = True
         response['error_message'] = str(e)
         return response
-    # Prepare the OpenAI API request
-    model_config = {}
-    for key in ["model", "model_name", "messages", "stop"]:
-        if model_params.get(key):
-            model_config[naming.get(key, key)] = model_params[key]
-    for key in ["temperature"]:
-        if model_params.get(key):
-            model_config[naming.get(key, key)] = float(model_params[key])
-    for key in ["top_p", "max_tokens"]:
-        if model_params.get(key):
-            model_config[naming.get(key, key)] = int(model_params[key])
-    for key in ["stream"]:
-        if model_params.get(key):
-            model_config[naming.get(key, key)] = \
-                model_params[key] == "1" or model_params[key] is True
-
     # Process the question and text
     try:
-        llm_response = client.chat.completions.create(**model_config)
+        llm_response = client.chat.completions.create(
+            **configs["model_config"])
     except Exception as e:
         response['error'] = True
         response['error_message'] = str(e)
@@ -63,7 +45,7 @@ def get_openai_api_response(model_params: dict, naming: dict = None) -> dict:
                   f"{model_params.get('provider', 'Provider N/A')} " +
                   f" LLM response: {llm_response}", debug=DEBUG)
         try:
-            if model_config.get('stream', False):
+            if configs["model_config"].get('stream', False):
                 response['response'] = ""
                 for chunk in llm_response:
                     if chunk.choices[0].delta.content is not None:

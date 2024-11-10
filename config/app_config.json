@@ -3,7 +3,7 @@
     "APP_VERSION": "0.1.0",
     "MAKER_MAME": "The FynBots",
     "APP_ICON": ":sparkles:",
-    "APP_DESCRIPTION": "The GenericSuite App Maker, a.k.a. {app_name}, helps on the App ideation and allows to generate code, images, video or answers from a text prompt, and kick start GenericSuite Apps code.",
+    "APP_DESCRIPTION": "The GenericSuite App Maker (GSAM) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the GenericSuite libraries.",
     "CONVERSATION_DB_PATH": "./db/conversations.json",
     "DEFAULT_PAGE": "home",
     "CODE_GENERATION_ENABLED": true,
@@ -33,6 +33,13 @@
         "nvidia",
         "huggingface",
         "together_ai"
+    ],
+    "NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS": [
+        "nvidia"
+    ],
+    "NO_SYSTEM_PROMPT_ALLOWED_MODELS": [
+        "o1-preview",
+        "o1-mini"
     ],
     "LLM_PROVIDERS": [
         "together_ai",

@@ -25,7 +25,7 @@ class LlmProvider(LlmProviderAbstract):
     Abstract class for LLM providers
     """
     def __init__(self, params: str):
-        self.params = params
+        super().__init__(params)
         self.llm = None
         if self.params.get("provider") == "openai":
             self.llm = OpenaiLlm(self.params)
@@ -42,7 +42,8 @@ class LlmProvider(LlmProviderAbstract):
         elif self.params.get("provider") == "rhymes":
             self.llm = AriaLlm(self.params)
         else:
-            raise ValueError("Invalid LLM provider")
+            raise ValueError(
+                f'Invalid LLM provider: {self.params.get("provider")}')
         self.init_llm()
 
     def query(
@@ -55,6 +56,7 @@ class LlmProvider(LlmProviderAbstract):
         """
         Abstract method for querying the LLM
         """
+        unified = unified or self.get_unified_flag()
         llm_response = self.llm.query(
             prompt=prompt,
             question=question,
@@ -76,7 +78,8 @@ class ImageGenProvider(LlmProviderAbstract):
         elif self.params.get("provider") == "openai":
             self.llm = OpenaiImageGen(self.params)
         else:
-            raise ValueError("Invalid LLM provider")
+            raise ValueError(
+                f'Invalid ImageGen provider: {self.params.get("provider")}')
         self.init_llm()
 
     def query(self, prompt: str, question: str,
@@ -115,7 +118,8 @@ class TextToVideoProvider(LlmProviderAbstract):
         elif self.params.get("provider") == "openai":
             raise NotImplementedError
         else:
-            raise ValueError("Invalid LLM provider")
+            raise ValueError(
+                f'Invalid TextToVideo provider: {self.params.get("provider")}')
         self.init_llm()
 
     def query(self, prompt: str, question: str,

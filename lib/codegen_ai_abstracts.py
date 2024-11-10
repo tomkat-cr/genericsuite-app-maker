@@ -1,12 +1,110 @@
 """
 LLM provider abstract class
 """
+from typing import Any
+
 from lib.codegen_utilities import get_default_resultset
 from lib.codegen_utilities import log_debug
 from lib.codegen_ai_abstracts_constants import DEFAULT_PROMPT_ENHANCEMENT_TEXT
 
 
 DEBUG = True
+
+
+def prepare_model_params(model_params: dict, naming: dict = None) -> dict:
+    """
+    Returns the OpenAI API client and model configurations
+    """
+    naming = naming or {
+        "model_name": "model",
+    }
+    # Prepare the OpenAI client configurations
+    client_config = {}
+    for key in ["base_url", "api_key"]:
+        if model_params.get(key):
+            client_config[naming.get(key, key)] = model_params[key]
+
+    # Prepare the OpenAI API request configurations
+    model_config = {}
+    for key in ["model", "model_name", "messages", "stop"]:
+        if model_params.get(key):
+            model_config[naming.get(key, key)] = model_params[key]
+    for key in ["temperature", "top_p"]:
+        if model_params.get(key):
+            model_config[naming.get(key, key)] = \
+                float(model_params[key])
+    for key in ["top_k", "max_tokens"]:
+        if model_params.get(key):
+            model_config[naming.get(key, key)] = int(model_params[key])
+    for key in ["stream"]:
+        if model_params.get(key):
+            model_config[naming.get(key, key)] = model_params[key] == "1"
+    return {
+        "client_config": client_config,
+        "model_config": model_config,
+    }
+
+
+# class OpenAiCompletionsAbstract:
+#     """
+#     Abstract class to simulate the OpenAI completions API
+#     """
+#     def __init__(self, parent_llm_provider: Any):
+#         self.parent_llm_provider: parent_llm_provider
+
+#     def create(self, **kwargs):
+#         """
+#         Simulate the OpenAI completions API create method
+#         """
+#         # naming = None
+#         # configs = prepare_model_params(kwargs, naming)
+
+#         prompt = None
+#         question = None
+#         prompt_enhancement_text = kwargs.get("prompt_enhancement_text")
+#         unified = False
+
+#         if "messages" not in kwargs:
+#             # Error: No messages provided
+#             raise ValueError("No messages provided [1]")
+
+#         if len(kwargs["messages"]) < 1:
+#             # Error: No messages provided
+#             raise ValueError("No messages provided [2]")
+
+#         if len(kwargs["messages"]) > 1:
+#             prompt = kwargs["messages"][0]["content"]
+#             question = kwargs["messages"][1]["content"]
+#         else:
+#             question = kwargs["messages"][0]["content"]
+#             unified = True
+
+#         return self.parent_llm_provider.query(
+#             prompt=prompt,
+#             question=question,
+#             prompt_enhancement_text=prompt_enhancement_text,
+#             unified=unified,
+#         )
+
+
+# class OpenAiChatAbstract:
+#     """
+#     Abstract class to simulate the OpenAI chat API
+#     E.g.
+#     .........
+#         response = ""
+#         llm_response = client.chat.completions.create(**model_config)
+#         if model_config.get('stream', False):
+#             for chunk in llm_response:
+#                 if chunk.choices[0].delta.content is not None:
+#                     print(chunk.choices[0].delta.content, end="")
+#                     response += chunk.choices[0].delta.content
+#         else:
+#             response = llm_response.choices[0].message.content
+#     .........
+#     """
+#     def __init__(self, parent_llm_provider: Any):
+#         self.completions = OpenAiCompletionsAbstract(parent_llm_provider)
 
 
 class LlmProviderAbstract:
@@ -21,6 +119,7 @@ class LlmProviderAbstract:
         self.naming = self.params.get("naming") or {
             "model_name": "model",
         }
+        # self.chat = OpenAiChatAbstract(self)
 
     def init_llm(self):
         """
@@ -39,24 +138,6 @@ class LlmProviderAbstract:
         Abstract method for querying the LLM
         """
         raise NotImplementedError
-
-    def query_from_text_model(
-        self,
-        prompt: str,
-        question: str,
-        prompt_enhancement_text: str = None,
-        unified: bool = False,
-    ) -> dict:
-        result = get_default_resultset()
-        if not self.params.get("text_model_class"):
-            result["error"] = True
-            result["error_message"] = "Text model class not provided"
-            return result
-        return self.params["text_model_class"].query(
-            prompt,
-            question,
-            prompt_enhancement_text,
-            unified)
 
     def video_gen(
         self,
@@ -88,6 +169,24 @@ class LlmProviderAbstract:
         Perform a video or other llm/model type generation request check
         """
         raise NotImplementedError
+
+    def query_from_text_model(
+        self,
+        prompt: str,
+        question: str,
+        prompt_enhancement_text: str = None,
+        unified: bool = False,
+    ) -> dict:
+        result = get_default_resultset()
+        if not self.params.get("text_model_class"):
+            result["error"] = True
+            result["error_message"] = "Text model class not provided"
+            return result
+        return self.params["text_model_class"].query(
+            prompt,
+            question,
+            prompt_enhancement_text,
+            unified)
 
     def prompt_enhancer(
         self,
@@ -293,20 +392,8 @@ class LlmProviderAbstract:
             additional_params = {}
         params = self.params.copy()
         params.update(additional_params)
-        model_params = {}
-        for key in ["model", "model_name", "messages", "stop"]:
-            if params.get(key):
-                model_params[self.naming.get(key, key)] = params[key]
-        for key in ["temperature", "top_p"]:
-            if params.get(key):
-                model_params[self.naming.get(key, key)] = \
-                    float(params[key])
-        for key in ["top_k", "max_tokens"]:
-            if params.get(key):
-                model_params[self.naming.get(key, key)] = int(params[key])
-        for key in ["stream"]:
-            if params.get(key):
-                model_params[self.naming.get(key, key)] = params[key] == "1"
+        model_params = prepare_model_params(
+            params, self.naming)["model_config"]
         if for_openai_api:
             model_params["provider"] = self.provider
             model_params["api_key"] = params.get("api_key")
@@ -328,8 +415,18 @@ class LlmProviderAbstract:
             additional_params = {}
         params = self.params.copy()
         params.update(additional_params)
-        client_config = {}
-        for key in ["base_url", "api_key"]:
-            if params.get(key):
-                client_config[self.naming.get(key, key)] = params[key]
-        return client_config
+        return prepare_model_params(params, self.naming)["client_config"]
+
+    def get_unified_flag(self):
+        """
+        Returns the unified flag
+        """
+        unified = False
+        if self.llm.params.get("llm_provider") in \
+           self.llm.params.get("no_system_prompt_allowed_providers", []):
+            unified = True
+        if self.llm.params.get("llm_model") in \
+           self.llm.params.get("no_system_prompt_allowed_models", []):
+            unified = True
+        return unified
+

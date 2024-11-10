@@ -412,6 +412,10 @@ class StreamlitLib:
             self.set_last_retrieved_conversation(id, conversation)
         return conversation
 
+    def show_conversation_debug(self, conversation: dict):
+        with st.expander("Detailed Response"):
+            st.write(conversation)
+
     def show_conversation_content(
         self,
         id: str, container: st.container,
@@ -439,10 +443,14 @@ class StreamlitLib:
             if conversation.get('answer'):
                 # Check for list type entries, and show them individually
                 if isinstance(conversation['answer'], list):
-                    for url in conversation['answer']:
-                        container.video(url)
+                    with container.container():
+                        self.show_conversation_debug(conversation)
+                        for url in conversation['answer']:
+                            st.write(f"Video URL: {url}")
+                            container.video(url)
                 else:
                     with container.container():
+                        self.show_conversation_debug(conversation)
                         st.write(f"Video URL: {conversation['answer']}")
                         st.video(conversation['answer'])
             else:
@@ -455,15 +463,23 @@ class StreamlitLib:
             if conversation.get('answer'):
                 # Check for list type entries, and show them individually
                 if isinstance(conversation['answer'], list):
-                    for url in conversation['answer']:
-                        container.image(url)
+                    with container.container():
+                        self.show_conversation_debug(conversation)
+                        for url in conversation['answer']:
+                            st.image(url)
                 else:
-                    container.image(conversation['answer'])
+                    with container.container():
+                        self.show_conversation_debug(conversation)
+                        st.image(conversation['answer'])
             else:
-                container.write("ERROR: No image found as answer")
+                with container.container():
+                    self.show_conversation_debug(conversation)
+                    st.write("ERROR: No image found as answer")
 
         else:
-            container.write(conversation['answer'])
+            with container.container():
+                self.show_conversation_debug(conversation)
+                st.write(conversation['answer'])
 
     def show_conversation_question(self, id: str):
         if not id:
@@ -745,32 +761,27 @@ class StreamlitLib:
             llm_model_index = 0
         return llm_model_index
 
-    def prompt_enhancement(self, session_state_key: str):
-        """
-        Prompt enhancement checkbox callback
-            Note: session_state_key could be something like
-            "prompt_enhancement_XX"
-        """
-        st.session_state.prompt_enhancement_flag = False
+    def set_session_flag(self, session_state_key: str,
+                         flag_session_state_key: str):
+        flag = False
         if session_state_key in st.session_state:
             if st.session_state.get(session_state_key):
-                st.session_state.prompt_enhancement_flag = True
-
-    def use_response_as_prompt(self, session_state_key: str):
-        """
-        Use response as prompt button callback.
-            Note: session_state_key could be something like
-            "use_response_as_prompt_XX"
-        """
-        st.session_state.use_response_as_prompt_flag = False
-        if session_state_key in st.session_state:
-            if st.session_state.get(session_state_key):
-                st.session_state.use_response_as_prompt_flag = True
+                flag = True
+        st.session_state[flag_session_state_key] = flag
 
     def get_llm_text_model(self):
         """
         Returns the LLM text model
         """
+        llm_parameters = {
+            "llm_providers_complete_list":
+                self.get_par_value("LLM_PROVIDERS_COMPLETE_LIST"),
+            "no_system_prompt_allowed_providers":
+                self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS"),
+            "no_system_prompt_allowed_models":
+                self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_MODELS"),
+        }
+
         result = get_default_resultset()
         result["llm_provider"] = self.get_llm_provider(
             "LLM_PROVIDERS",
@@ -787,10 +798,9 @@ class StreamlitLib:
             result["error"] = True
             result["error_message"] = "LLM Model not selected"
         else:
-            result["class"] = LlmProvider({
-                "provider": result["llm_provider"],
-                "model_name": result["llm_model"],
-            })
+            llm_parameters["provider"] = result["llm_provider"]
+            llm_parameters["model_name"] = result["llm_model"]
+            result["class"] = LlmProvider(llm_parameters)
         return result
 
     def text_generation(self, result_container: st.container,

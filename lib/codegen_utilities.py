@@ -62,10 +62,17 @@ def get_new_item_id():
     return str(uuid.uuid4())
 
 
-def read_file(file_path):
+def read_file(file_path, params: dict = None):
     """
-    Reads a file and returns its content
+    Reads a file and returns its content.
+    If the file_path is a URL, it will be downloaded
+    If the file_path is a local file, it will be read
+    if params.get("save_file") is True, it will be saved in the output_dir
+    and return file_path will enclosed by [] to indicate the saved file path
+    (e.g. [./output/file_name.txt])
     """
+    if not params:
+        params = {}
     # If the file path begins with "http", it's a URL
     if file_path.startswith("http"):
         # If the file path begins with "https://github.com",
@@ -84,6 +91,26 @@ def read_file(file_path):
     else:
         with open(file_path, 'r') as f:
             content = f.read()
+
+    # Save the file if requested by the "save_file" parameter
+    # and return the file path enclosed by []
+    if params.get("save_file"):
+        # "./output" is the default output directory if the output_dir
+        # parameter is not provided
+        output_dir = params.get("output_dir", "./output")
+        # If the output_dir path does not exist, create it
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        if params.get("file_name"):
+            file_name = params.get("file_name")
+        else:
+            file_name = os.path.basename(file_path)
+        target_file_path = f"{output_dir}/{file_name}"
+        log_debug(f"READ_FILE | Saving file: {target_file_path}", debug=DEBUG)
+        with open(target_file_path, 'w') as f:
+            f.write(content)
+            f.close()
+        return f"[{target_file_path}]"
     return content
 
 

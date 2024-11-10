@@ -24,10 +24,17 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### New
 Add tabs to organize the multiple app and code generation options [GS-55].
 Add use response as prompt feature [GS-55].
+Add llamaindex embeddings index query on code generator.
+Add get_unified_flag() to configure providers and models that only accepts user messages,  not system prompt, like o1-preview.
+Add prepare_model_params() to normalize the client and model parameters preparartion.
+Add LlamaIndexCustomLLM to abstract the llamaindex models with codegen LlmProvider.
+Add show_conversation_debug() to give the usert with detailled model responses.
 
 ### Changes
 Main streamlit UI layout elements separated in different functions [GS-55].
 All model type (text, video, image) uses the model configuration UI selection [GS-55].
+"Invalid LLM/ImageGen/TextToVideo provider" detailed error.
+read_file() allows to save the read files in a local directory to allow llamaindex embeddings to read it.
 
 ### Fixes
 Fix the way enhance prompt feature works, because it was not working properly with the absense of prompt text model [GS-55].

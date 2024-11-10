@@ -10,7 +10,7 @@ create_venv() {
 install() {
     create_venv
 	if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-	if [ ! -f requirements.txt ]; then pip install --upgrade pip; pip install streamlit requests python-dotenv pymongo openai ollama groq together ; pip freeze > requirements.txt; fi
+	if [ ! -f requirements.txt ]; then pip install --upgrade pip; pip install streamlit requests python-dotenv pymongo openai ollama groq together llama-index ; pip freeze > requirements.txt; fi
 }
 
 requirements() {

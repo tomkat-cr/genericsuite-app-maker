@@ -13,12 +13,15 @@ import pprint
 
 import argparse
 
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+
 from lib.codegen_ai_utilities import LlmProvider
 from lib.codegen_utilities import (
     get_default_resultset,
     read_file,
 )
 from lib.codegen_utilities import get_app_config
+from lib.codegen_llamaindex_abstraction import LlamaIndexCustomLLM
 # from lib.codegen_utilities import log_debug
 
 DEBUG = True
@@ -53,20 +56,27 @@ OLLAMA_BASE_URL = ""
 
 
 # Default prompt to generate the .json files for the frontend and backend
-DEFAULT_PROMPT = """
+SYSTEM_PROMPT = """
 You are a developer specialized in JSON files generation and
 Python Langchain Tools implementation.
 Your task is to create the JSON files for the frontend and backend
 of the given application and the Langchain Tools to perform the search,
 insert and update operations.
 """
+
 USER_MESSAGE_PROMPT = """
 The given application and its schema/table descriptions are described below:
 ----------------
 {user_input}
 ----------------
+"""
+
+SUFFIX_NO_EMBEDDINGS = """
 Based on the following documentation and examples:
 {files}
+"""
+
+SUFFIX_END = """
 Give me the generic CRUD editor configuration JSON files for
 the given application, and the python code to implement the Langchain Tools
 to perform the search, insert and update operations for the given application
@@ -116,15 +126,16 @@ class JsonGenerator:
     """
     Class to generate the .json files for the frontend and backend
     """
-
     def __init__(self, params: dict = None):
         if not params:
             params = {}
         self.params = params or {}
+        self.params.update(get_app_config())
         self.args = self.read_arguments(params)
-        self.args.update(get_app_config())
+        self.embeddings_sources_dir = self.params.get(
+            "embeddings_sources_dir", "./embeddings_sources")
         self.reference_files = self.get_reference_files()
-        self.prompt = DEFAULT_PROMPT
+        self.system_prompt = SYSTEM_PROMPT
         self.user_input = self.get_user_input()
         self.final_input = None
         self.final_summary = None
@@ -230,17 +241,25 @@ class JsonGenerator:
             user_input = self.read_user_input_file()
         else:
             user_input = self.args.user_input_text
-        user_input = USER_MESSAGE_PROMPT.format(
-            user_input=user_input,
-            files="\n".join([
-                f"\nFile: {f.get('name')}" +
-                "\nFile content:" +
-                "\n-----------------" +
-                f"\n{f.get('content')}" +
-                "\n-----------------"
-                for f in self.reference_files
-            ]),
-        )
+
+        if self.params.get("use_embeddings"):
+            template = SYSTEM_PROMPT + USER_MESSAGE_PROMPT + SUFFIX_END
+            user_input = template.format(
+                user_input=user_input,
+            )
+        else:
+            template = USER_MESSAGE_PROMPT + SUFFIX_NO_EMBEDDINGS + SUFFIX_END
+            user_input = template.format(
+                user_input=user_input,
+                files="\n".join([
+                    f"\nFile: {f.get('name')}" +
+                    "\nFile content:" +
+                    "\n-----------------" +
+                    f"\n{f.get('content')}" +
+                    "\n-----------------"
+                    for f in self.reference_files
+                ]),
+            )
         return user_input
 
     def log_debug(self, message):
@@ -308,164 +327,60 @@ class JsonGenerator:
             model_to_use = self.args.model
         return model_to_use
 
-    # def unify_messages(self, messages):
-    #     """
-    #     Unifies the messages to be compatible with the different providers
-    #     """
-    #     # Both system and user must be unified in one user message
-    #     return [{
-    #         "role": "user",
-    #         "content": "\n".join([m["content"] for m in messages])
-    #     }]
-
-    # def fix_messages(self, messages):
-    #     """
-    #     Fixes the messages to be compatible with the different providers
-    #     """
-    #     if self.args.provider == "nvidia":
-    #         return self.unify_messages(messages)
-    #     return messages
-
-    # def get_openai_api_response(self, response_raw: Any) -> str:
-    #     """
-    #     Returns the response from the OpenAI API
-    #     """
-    #     if self.model_config.get('stream', False):
-    #         response = ""
-    #         for chunk in response_raw:
-    #             if chunk.choices[0].delta.content is not None:
-    #                 print(chunk.choices[0].delta.content, end="")
-    #                 response += chunk.choices[0].delta.content
-    #     else:
-    #         response = response_raw.choices[0].message.content
-    #     return response
-
-    # def get_model_response(self, model: str, messages: list):
-    #     """
-    #     Returns the response from the model
-    #     """
-    #     self.model_config = {
-    #         'messages': self.fix_messages(messages),
-    #         'model': model,
-    #     }
-
-    #     if self.args.temperature:
-    #         if self.args.provider == "ollama":
-    #             self.model_config['options'] = {
-    #                 "temperature": float(self.args.temperature)
-    #             }
-    #         else:
-    #             self.model_config['temperature'] = \
-    #                 float(self.args.temperature)
-    #     elif self.args.provider == "nvidia":
-    #         self.model_config['temperature'] = 0.5
-
-    #     if self.args.stream:
-    #         self.model_config['stream'] = self.args.stream == "1"
-    #     if self.args.provider == "nvidia":
-    #         self.model_config['stream'] = True
-
-    #     # Reference:
-    #     # https://pypi.org/project/ollama/
-    #     # https://github.com/ollama/ollama/blob/main/docs/api.md
-    #     #
-    #     self.provider_model_used = \
-    #         f"Provider: {self.args.provider}" + \
-    #         f" | Model: {self.model_config['model']}"
-    #     self.log_debug("")
-    #     self.log_debug(self.provider_model_used)
-    #     # self.log_debug_structured(self.model_config)
-
-    #     if self.args.provider == "ollama":
-    #         if self.args.ollama_base_url:
-    #             self.log_debug(
-    #                 "Using ollama client with base_url:" +
-    #                 f" {self.args.ollama_base_url}")
-    #             self.log_debug("")
-    #             client = Client(host=self.args.ollama_base_url)
-    #             response_raw = client.chat(**self.model_config)
-    #         else:
-    #             response_raw = ollama.chat(**self.model_config)
-    #         response = response_raw['message']['content']
-
-    #     elif self.args.provider == "groq":
-    #         client = Groq(
-    #             api_key=os.environ.get("GROQ_API_KEY"),
-    #         )
-    #         response_raw = client.chat.completions.create(
-    #             **self.model_config)
-    #         response = response_raw.choices[0].message.content
-
-    #     elif self.args.provider == "nvidia":
-    #         # Reference:
-    #         # https://build.nvidia.com/nvidia/llama-3_1-nemotron-70b-instruct
-    #         client = OpenAI(
-    #             base_url="https://integrate.api.nvidia.com/v1",
-    #             api_key=os.environ.get("NVIDIA_API_KEY"),
-    #         )
-    #         response_raw = client.chat.completions.create(
-    #             top_p=1,
-    #             # max_tokens=1024,
-    #             **self.model_config)
-    #         response = self.get_openai_api_response(response_raw)
-
-    #     elif self.args.provider == "rhymes":
-    #         # Reference:
-    #         # https://lablab.ai/t/aria-api-tutorial
-    #         client = OpenAI(
-    #             base_url='https://api.rhymes.ai/v1',
-    #             api_key=os.environ.get("RHYMES_ARIA_API_KEY"),
-    #         )
-    #         response_raw = client.chat.completions.create(
-    #             stop=["<|im_end|>"],
-    #             top_p=1,
-    #             # max_tokens=1024,
-    #             **self.model_config)
-    #         response = self.get_openai_api_response(response_raw)
-
-    #     elif self.args.provider == "chat_openai" \
-    #             or self.args.provider == "openai":
-    #         client = OpenAI(
-    #             api_key=os.environ.get("OPENAI_API_KEY"),
-    #         )
-    #         response_raw = client.chat.completions.create(
-    #             top_p=1,
-    #             **self.model_config)
-    #         response = self.get_openai_api_response(response_raw)
-
-    #     else:
-    #         raise ValueError(f"Invalid provider: {self.args.provider}")
-
-    #     # Model response debugging
-    #     # self.log_debug("")
-    #     # self.log_debug(f'Response: {response}')
-    #     return response
-
-    def get_model_response(self, model: str, prompt: str, user_input: str):
+    def get_llm_model_object(self, model: str):
         """
-        Returns the response from the model
+        Returns the LLM model object
         """
         self.model_config = {
-            'model': model,
+            'model_name': model,
             "provider": self.args.provider,
             "temperature": self.args.temperature,
             "stream": self.args.stream,
             "ollama_base_url": self.args.ollama_base_url,
         }
-        no_system_prompt = (self.args.provider in ["nvidia"])
+        # no_system_prompt = (self.args.provider in ["nvidia"])
         self.provider_model_used = \
             f"Provider: {self.args.provider}" + \
-            f" | Model: {self.model_config['model']}"
+            f" | Model: {self.model_config['model_name']}"
         # self.log_debug_structured(self.model_config)
         llm_model = LlmProvider(self.model_config)
+        return llm_model
+
+    def get_chat_response(self, model: str, prompt: str, user_input: str):
+        """
+        Returns the response from the model
+        """
+        llm_model = self.get_llm_model_object(model)
         llm_response = llm_model.query(
             prompt=prompt,
             question=user_input,
-            unified=no_system_prompt,
+            # unified=no_system_prompt,
         )
         if llm_response['error']:
             raise ValueError(f'ERROR: {llm_response["error_message"]}')
         return llm_response['response']
+
+    def get_index_response(self, model: str, prompt: str, user_input: str):
+        """
+        Returns the response from the index
+        """
+        llamaindex_llm = LlamaIndexCustomLLM()
+        llamaindex_llm.init_custom_llm(self.get_llm_model_object(model))
+        documents = SimpleDirectoryReader(
+            self.embeddings_sources_dir).load_data()
+        index = VectorStoreIndex.from_documents(documents)
+        query_engine = index.as_query_engine(llm=llamaindex_llm)
+        response = query_engine.query(user_input)
+        self.log_debug(f"get_index_response | response:\n{response}")
+        return f"{response}"
+
+    def get_model_response(self, model: str, prompt: str, user_input: str):
+        """
+        Returns the response from the index or the chat
+        """
+        if self.params.get("use_embeddings"):
+            return self.get_index_response(model, prompt, user_input)
+        return self.get_chat_response(model, prompt, user_input)
 
     def CEO_Agent(self, user_input, is_final=False):
         """
@@ -478,17 +393,6 @@ class JsonGenerator:
             if not is_final else \
             'Summarize the following plan and its implementation into a ' + \
             'cohesive final strategy.'
-
-        # messages = [
-        #     {
-        #         'role': 'system',
-        #         'content': system_prompt
-        #     },
-        #     {
-        #         'role': 'user',
-        #         'content': user_input
-        #     }
-        # ]
 
         self.log_debug("")
         self.log_debug(f"CEO messages (is_final: {is_final}):")
@@ -516,20 +420,6 @@ class JsonGenerator:
         Factory method to create specialized agents for each step
         """
         def agent(task):
-            # messages = [
-            #     {
-            #       'role': 'system',
-            #       'content': f'You are Agent {step_number}, focused ONLY ' +
-            #       f'on implementing step {step_number}. Provide a detailed' +
-            #       ' but concise implementation of this specific step. ' +
-            #       'Ignore all other steps.'
-            #     },
-            #     {
-            #         'role': 'user',
-            #         'content': f'Given this task:\n{task}\n\nProvide ' +
-            #         f'implementation for step {step_number} only'
-            #     }
-            # ]
             system_prompt = (
                 f'You are Agent {step_number}, focused ONLY ' +
                 f'on implementing step {step_number}. Provide a detailed' +
@@ -567,6 +457,12 @@ class JsonGenerator:
         """
         Returns the reference files to be used
         """
+        read_file_params = {}
+        if self.params.get("use_embeddings"):
+            read_file_params = {
+                "save_file": True,
+                "output_dir": self.embeddings_sources_dir,
+            }
         # Read the `schema_generator_ref_files.json` file
         with open('./config/schema_generator_ref_files.json', 'r') as f:
             ref_files = json.load(f)
@@ -577,7 +473,7 @@ class JsonGenerator:
             {
                 'name': ref_file['name'],
                 'path': ref_file['path'],
-                'content': read_file(ref_file['path']),
+                'content': read_file(ref_file['path'], read_file_params),
             } for ref_file in ref_files
         ]
         return ref_files_list
@@ -596,7 +492,7 @@ class JsonGenerator:
             if DEBUG:
                 f.write("DEBUG Prompt:\n")
                 f.write("\n")
-                f.write(self.prompt)
+                f.write(self.system_prompt)
                 f.write("\n")
             f.write("\n")
             f.write("User input:\n")
@@ -626,7 +522,8 @@ class JsonGenerator:
             f"{self.args.agents_count} agent steps...")
 
         # Step # 1: Get high level plan from CEO
-        initial_plan = self.CEO_Agent(f'{self.prompt}\n{self.user_input}')
+        initial_plan = self.CEO_Agent(
+            f'{self.system_prompt}\n{self.user_input}')
 
         # Step # 2: Create agents, execute all agent steps, and get detailed
         # implementation for each step
@@ -649,24 +546,12 @@ class JsonGenerator:
         self.save_result()
 
         self.log_procesing_time(message="Main process", start_time=start_time)
-        # return self.final_summary
         return response
 
     def simple_processing(self):
         """
         Simple processing without agents
         """
-        # messages = [
-        #     {
-        #         'role': 'system',
-        #         'content': self.prompt
-        #     },
-        #     {
-        #         'role': 'user',
-        #         'content': self.user_input
-        #     }
-        # ]
-
         self.log_debug("")
         self.log_debug("Simple Processing messages:")
         # self.log_debug_structured(messages)
@@ -675,9 +560,8 @@ class JsonGenerator:
 
         response = self.get_model_response(
             model=self.get_model(),
-            prompt=self.prompt,
+            prompt=self.system_prompt,
             user_input=self.user_input,
-            # messages=messages
         )
 
         self.log_procesing_time(start_time=start_time)
@@ -709,6 +593,14 @@ class JsonGenerator:
         else:
             # Reasoning with agents
             response["response"] = self.process_task()
+
+        response["other_data"] = {
+            "system_prompt": self.system_prompt,
+            "user_input": self.user_input,
+        }
+        if self.final_input:
+            response["other_data"]["final_input"] = self.final_input
+
         return response
 
 
