@@ -102,7 +102,7 @@ def read_file(file_path, params: dict = None):
             file_name = params.get("file_name")
         else:
             file_name = os.path.basename(file_path)
-        target_file_path = save_file(output_dir, file_name)
+        target_file_path = save_file(output_dir, file_name, content)
         return f"[{target_file_path}]"
     return content
 

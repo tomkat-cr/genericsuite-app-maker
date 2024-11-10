@@ -25,6 +25,11 @@ Add: ideation form to get the application description and other data,  and gener
 Add: forms constructor and processor [GS-154].
 Add: PowerPoint presentation generation [GS-154].
 
+### Fixes
+Fix: the "You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`" warning in the application startup [GS-154].
+Fix: the "save_file() missing 1 required positional argument: 'content'" running the Code generator [GS-154].
+
+
 ## 0.0.2 (2024-11-09)
 ---
 
