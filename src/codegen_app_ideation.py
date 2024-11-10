@@ -22,7 +22,7 @@ def get_features_data():
             "mandatory_fields": [
                 "title",
                 "subtitle",
-                "application_subject"
+                "application_subject",
                 "web_or_mobile",
             ],
         },
