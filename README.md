@@ -219,25 +219,40 @@ This option allows the JSON configuration files and Langchain Tools Python code 
 - Each entry in the side menu has an `x` button to delete it.
 - Depending on the `DB_TYPE` parameter, the side menu items are stored in MongoDB or in a JSON file localted in the `db` folder.
 
-<!--
 ## Screenshots
 
-![App Screenshot](./assets/GSAM-Screenshot-010.png)
+Main Page
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.53.34 PM.png)
 
-![App Screenshot](./assets/GSAM-Screenshot-020.png)
+LLM Inference
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.55.46 PM.png)
 
-![App Screenshot](./assets/GSAM-Screenshot-030.png)
+Suggestions Generation & Model Selection
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.57.23 PM.png)
 
-![App Screenshot](./assets/GSAM-Screenshot-040.png)
+Suggestion Applied to Prompt
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.58.55 PM.png)
 
-![App Screenshot](./assets/GSAM-Screenshot-050.png)
+Code Generation
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.54.23 PM.png)
 
-![App Screenshot](./assets/GSAM-Screenshot-060.png)
+App Ideation Page [1]
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.54.39 PM.png)
 
-![App Screenshot](./assets/GSAM-Screenshot-070.png)
+App Ideation Page [2]
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.58.12 PM.png)
 
-![App Screenshot](./assets/GSAM-Screenshot-080.png)
--->
+Presentation Generation
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.54.45 PM.png)
+
+Image Generation
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.55.32 PM.png)
+
+Image Gallery
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.54.55 PM.png)
+
+Video Gallery
+![App Screenshot](./assets/screenshots/Screenshot%202024-11-10%20at%205.55.02 PM.png)
 
 ## Context
 
@@ -247,7 +262,9 @@ This project was developed as part of the [Llama Impact Hackathon](https://labla
 
 - Project submission page: [GSAM](https://lablab.ai/event/llama-impact-hackathon/the-fynbots/gsam-genericsuite-app-maker)
 
-- Presentation video: [Llama Impact Hackathon - GSAM App Video Presentation](https://youtu.be/)
+- Presentation video: [Llama Impact Hackathon - GSAM App Video Presentation](https://lablab.ai/event/llama-impact-hackathon/the-fynbots/gsam-genericsuite-app-maker)
+
+- Presentation document: [Llama Impact Hackathon - GSAM App Maker Presentation](https://storage.googleapis.com/lablab-static-eu/presentations/submissions/cm3c8x66j00003b720knfr48o/cm3c8x66j00003b720knfr48o-1731282858572_7hmmg0ucv.pdf)
 
 - Team: [The FynBots](https://lablab.ai/event/llama-impact-hackathon/the-fynbots)
 
