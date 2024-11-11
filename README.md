@@ -190,6 +190,8 @@ This option allows the JSON configuration files and Langchain Tools Python code 
 
 - Each entry in the side menu has an `x` button to delete it.
 - Depending on the `DB_TYPE` parameter, the side menu items are stored in MongoDB or in a JSON file localted in the `db` folder.
+- You can add additional LLM / Image / Video providers and models in the [./config/app_config.json](./config/app_config.json) file, as well as configure all other GSAM parameters.
+- All the system prompts used by GSAM are located in the [./config](./config) directory.
 
 ## Screenshots
 
