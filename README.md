@@ -73,50 +73,22 @@ The `.env` file should have the following content:
 
 ```bash
 PYTHON_VERSION=3.10
-##############################
-#
-# LLM parameters
-LLM_PROVIDER=together_ai  
-# LLM_PROVIDER=openai
-# LLM_PROVIDER=groq
-# LLM_PROVIDER=nvidia
-# LLM_PROVIDER=ollama
-# LLM_PROVIDER=huggingface
-# LLM_PROVIDER=rhymes
-#
-# texto-to-image provider
-# TEXT_TO_IMAGE_PROVIDER=openai
-TEXT_TO_IMAGE_PROVIDER=huggingface
-#
-# Text-to-video provider
-TEXT_TO_VIDEO_PROVIDER=rhymes
-#
-##############################
 #
 # Together AI
 TOGETHER_AI_API_KEY=
-#
 # HuggingFace
-# Hugging Face credentials and model URL
 HUGGINGFACE_API_KEY=
-#
 # RHYMES parameters
 RHYMES_ALLEGRO_API_KEY=
 RHYMES_ARIA_API_KEY=
-#
 # OpenAI
 OPENAI_API_KEY=
-#
 # Groq
 GROQ_API_KEY=
-#
 # Ollama
 OLLAMA_BASE_URL=localhost:11434
-#
 # Nvidia
 NVIDIA_API_KEY=
-#
-##############################
 #
 # Database parameters
 DB_TYPE=mongodb
