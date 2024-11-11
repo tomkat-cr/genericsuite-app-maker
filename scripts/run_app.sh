@@ -3,8 +3,19 @@ set -e
 # set -o allexport ; . .env ; set +o allexport ;
 
 create_venv() {
-	if [ ! -d venv ]; then python3 -m venv venv; fi
-	if [ -d venv ]; then source venv/bin/activate; fi
+	if [ ! -d venv ]; then
+        python3 -m venv venv
+    fi
+	if [ -d venv ]; then
+        if ! source venv/bin/activate
+        then
+            if ! . venv/bin/activate
+            then
+                echo "Error activating virtual environment"
+                exit 1
+            fi
+        fi
+    fi
 }
 
 install() {

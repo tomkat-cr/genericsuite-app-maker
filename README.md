@@ -1,6 +1,6 @@
 # GSAM ✨ GenericSuite App Maker
 
-Generic Suite App Maker and code generator using AI.
+AI tool to enhance the software development.
 
 ![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png)
 
@@ -15,13 +15,13 @@ Generic Suite App Maker and code generator using AI.
 * Image Generation: using HuggingFace and the Flux or OpenAI Dall-E models.
 * Video Generation: using Rhymes AI Allegro model.
 * Galleries to show the generated images and videos.
-* Hability to change the Provider and Model used for all the LLM Inferences, image and video generations.
+* Ability to change the Provider and Model used for all the LLM Inferences, image and video generations.
 * Suggestions to generate App ideas, and the hability to customize the suggestion generation prompt.
 * Code Generation: suggest the JSON configuration files and Langchain Tools Python code from an App description to be used with the GenericSuite library.
 * Use LlamaIndex to generate code and JSON files using vectorized data instead of send all the attachments to the LLM.
 * Store each user interaction (question, answer, image, video, code) in a MongoDB database, and retrieve it later.
 * Database Management: import and export data from MongoDB to JSON files.
-* Prompt Engineering: there's an option to allow the prompts/questions optimiation to take more advantage from the Model's capabilities.
+* Prompt Engineering: there's an option to allow the prompts/questions optimization to take more advantage from the Model's capabilities.
 * Naming: generate name ideas for the App.
 * App Structure: generate the App description and database table structures.
 * App Presentation: generate PowerPoint presentation for the App, including the content, speaker notes, and image generation prompts.
@@ -33,7 +33,7 @@ Generic Suite App Maker and code generator using AI.
 * Huggingface Inference API
 * Flux.1 image generation model
 * Rhymes Allegro video generation model
-* LlamaIndex framekwork.
+* LlamaIndex framework.
 * StreamLit
 * MongoDB Atlas
 * Python 3.10
@@ -245,7 +245,7 @@ This project was developed as part of the [Llama Impact Hackathon](https://labla
 
 ![Hackathon banner image](./assets/llama-impact-hackathon-official-banner.webp)
 
-- Project submission page: [GSAM](https://lablab.ai/event/llama-impact-hackathon/the-fynbots/GSAM)
+- Project submission page: [GSAM](https://lablab.ai/event/llama-impact-hackathon/the-fynbots/gsam-genericsuite-app-maker)
 
 - Presentation video: [Llama Impact Hackathon - GSAM App Video Presentation](https://youtu.be/)
 
