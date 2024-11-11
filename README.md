@@ -1,12 +1,12 @@
 # GSAM ✨ GenericSuite App Maker
 
-AI tool to enhance the software development ideation.
+AI tool to enhance the software development ideation and AI models, providers and features selection and test.
 
 ![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png)
 
 ## Introduction
 
-[GSAM](https://gsam.streamlit.app/) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
+[GSAM](https://gsam-app.streamlit.app) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 
 
 ## Key Features
@@ -180,7 +180,7 @@ Go to your favorite Browser and open the URL provided by the application.
 * Enter your text prompt in the provided text box or select one of the suggested prompts.
 * Check the `Enhance prompt` checkbox to allow the LLM to optimize the prompt.
 * Select the `Main` tab and click the `Generate Image` button.
-* Sit back and watch as GSAM transforms your text into a high-quality image.
+* Sit back and watch as [GSAM](https://gsam-app.streamlit.app) transforms your text into a high-quality image.
 * After a few seconds, the image will appear.
 * All images are available in the side menu and can be viewed in the gallery clicking the `Image Gallery` button.
 
@@ -189,7 +189,7 @@ Go to your favorite Browser and open the URL provided by the application.
 * Enter your text prompt in the provided text box or select one of the suggested prompts.
 * Check the `Enhance prompt` checkbox to allow the LLM to optimize the prompt.
 * Select the `Main` tab and click the `Generate Video` button.
-* Sit back and watch as GSAM transforms your text into a high-quality video.
+* Sit back and watch as [GSAM](https://gsam-app.streamlit.app) transforms your text into a high-quality video.
 * After 2+ minutes, the video will appear in the video container.
 * All videos are available in the side menu and can be viewed in the gallery clicking the `Video Gallery` button.
 
@@ -211,7 +211,7 @@ This option allows the JSON configuration files and Langchain Tools Python code 
 * Check the `Use Embeddings` checkbox to use LlamaIndex in the code and JSON files generate, using vectorized data instead of send all the attachments to the LLM.
 * Check the `Enhance prompt` checkbox to allow the LLM to optimize the prompt.
 * Select the `Code Generation` tab and click the `Generate Config & Tools Code` button.
-* Sit back and watch as GSAM transforms your text into a high-quality code.
+* Sit back and watch as [GSAM](https://gsam-app.streamlit.app) transforms your text into a high-quality code.
 * After a few seconds, the code will appear in the code container.
 
 ### Notes
