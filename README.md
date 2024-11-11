@@ -1,12 +1,12 @@
 # GSAM ✨ GenericSuite App Maker
 
-AI tool to enhance the software development.
+AI tool to enhance the software development ideation.
 
 ![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png)
 
 ## Introduction
 
-[GSAM](https://gsam.streamlit.app/) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the GenericSuite library.
+[GSAM](https://gsam.streamlit.app/) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 
 
 ## Key Features
@@ -17,7 +17,7 @@ AI tool to enhance the software development.
 * Galleries to show the generated images and videos.
 * Ability to change the Provider and Model used for all the LLM Inferences, image and video generations.
 * Suggestions to generate App ideas, and the hability to customize the suggestion generation prompt.
-* Code Generation: suggest the JSON configuration files and Langchain Tools Python code from an App description to be used with the GenericSuite library.
+* Code Generation: suggest the JSON configuration files and Langchain Tools Python code from an App description to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 * Use LlamaIndex to generate code and JSON files using vectorized data instead of send all the attachments to the LLM.
 * Store each user interaction (question, answer, image, video, code) in a MongoDB database, and retrieve it later.
 * Database Management: import and export data from MongoDB to JSON files.
@@ -205,7 +205,7 @@ Click the `App ideation` tab to have access to the app ideation page. This page 
 
 ### Code Generation
 
-This option allows the JSON configuration files and Langchain Tools Python code generation from an App description to be used with the GenericSuite library.
+This option allows the JSON configuration files and Langchain Tools Python code generation from an App description to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 
 * Enter your text prompt in the provided text box or select one of the suggested prompts.
 * Check the `Use Embeddings` checkbox to use LlamaIndex in the code and JSON files generate, using vectorized data instead of send all the attachments to the LLM.
