@@ -250,7 +250,7 @@ def add_suggestions():
     suggestion_container = st.empty()
     cgsl.show_suggestion_components(suggestion_container)
 
-    # Show the siderbar selected conversarion's question and answer in the
+    # Show the siderbar selected conversation's question and answer in the
     # main section
     # (must be done before the user input)
     for conversation in st.session_state.conversations:

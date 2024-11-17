@@ -420,11 +420,13 @@ class StreamlitLib:
                 title = title.replace("\n", " ")
                 title = title.replace("\r", " ")
                 title = title.strip()
+                help_msg = \
+                    f"{conversation['type'].capitalize()} generated on " \
+                    f"{conversation['date_time']}\n\nID: {conversation['id']}"
                 st.button(
                     title[:title_length],
                     key=f"{conversation['id']}",
-                    help=f"{conversation['type'].capitalize()} generated on " +
-                        f"{conversation['date_time']}")
+                    help=help_msg)
             with col2:
                 st.button(
                     "x",
