@@ -109,7 +109,7 @@ class OpenaiImageGen(OpenaiLlm):
         self,
         question: str,
         prompt_enhancement_text: str = None,
-        unified: bool = False,
+        image_extension: str = 'jpg',
     ) -> dict:
         """
         Perform an OpenAI image generation request
@@ -130,7 +130,7 @@ class OpenaiImageGen(OpenaiLlm):
             "model": ig_model_name,
             "prompt": pam_response["user_input"],
             "size": self.params.get("size", "1024x1024"),
-            "quality": self.params.get("quality", "100"),
+            "quality": self.params.get("quality", "standard"),
             "n": 1,
         }
 

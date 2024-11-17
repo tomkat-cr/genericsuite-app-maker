@@ -18,6 +18,7 @@ from lib.codegen_ai_provider_huggingface import (
     HuggingFaceLlm,
     HuggingFaceImageGen,
 )
+from lib.codegen_ai_provider_xai import XaiLlm
 
 
 class LlmProvider(LlmProviderAbstract):
@@ -27,7 +28,8 @@ class LlmProvider(LlmProviderAbstract):
     def __init__(self, params: str):
         super().__init__(params)
         self.llm = None
-        if self.params.get("provider") == "openai":
+        if self.params.get("provider") == "openai" or \
+           self.params.get("provider") == "chat_openai":
             self.llm = OpenaiLlm(self.params)
         elif self.params.get("provider") == "groq":
             self.llm = GroqLlm(self.params)
@@ -41,6 +43,8 @@ class LlmProvider(LlmProviderAbstract):
             self.llm = TogetherAiLlm(self.params)
         elif self.params.get("provider") == "rhymes":
             self.llm = AriaLlm(self.params)
+        elif self.params.get("provider") == "xai":
+            self.llm = XaiLlm(self.params)
         else:
             raise ValueError(
                 f'Invalid LLM provider: {self.params.get("provider")}')

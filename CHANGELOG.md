@@ -17,6 +17,25 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Breaks
 
 
+## Unreleased
+## 0.2.0 (2024-11-11)
+---
+
+### New
+Add ideation from a user's prompt in the App Ideation section.
+Add the "Generate App Ideas" button to the App Ideation section.
+Add the X AI Grok model. 
+Add "timeframe" to ideation form.
+Add model advanced configuration (temperature, max. tokens, top P, frequency penalty, presense penalty)
+
+### Changes
+All prompts were enhanced.
+
+### Fixes
+Fix the error when the image does not exist.
+Fix errors with the OpenAI image generation.
+
+
 ## 0.1.0 (2024-11-10)
 ---
 

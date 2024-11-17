@@ -1,11 +1,14 @@
-Generate suggestions for web and mobile software application ideas. These applications should be practical and impactful. Focus on ideas that are achievable within a constrained timeframe, suitable for an experienced developer.
+Generate suggestions for web and mobile software application mind-blowing ideas. These applications should be practical and impactful. Focus on ideas that are achievable within a constrained timeframe, suitable for an experienced developer.
 
 # Requirements
-- The application subject is: {subject}
-- Constrained timeframe: Ensure suggested ideas can reasonably be scoped and implemented within {timeframe}.
+- The application subject is: {question}
 - Include a mix of fun, practical, profitable (or with social impact depending on the subject), or utility-based ideas.
 - Specifically call out the target (web vs mobile application).
 - Each suggestion should clearly explain the purpose of the app and how the development can be accomplished in terms of scope.
+
+# Output Format
+
+Provide the output as descriptions, each one a a bullet point and including: name, goal, alingment with the application subject, and real-world impact.
 
 # Notes
 - Ensure simplicity by focusing on core features that solve a specific problem or add value.

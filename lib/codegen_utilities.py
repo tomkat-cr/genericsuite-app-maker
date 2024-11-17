@@ -107,6 +107,22 @@ def read_file(file_path, params: dict = None):
     return content
 
 
+def is_an_url(element_url_or_path: str):
+    """ Returns True if the string is an URL"""
+    return element_url_or_path.startswith(
+        ("http://", "https://", "ftp://", "file://")
+    )
+
+
+def path_exists(file_path: str):
+    """
+    Creates the output directory if it doesn't exist
+    """
+    if is_an_url(file_path):
+        return None
+    return os.path.exists(file_path)
+
+
 def create_dirs(output_dir: str):
     """
     Creates the output directory if it doesn't exist
