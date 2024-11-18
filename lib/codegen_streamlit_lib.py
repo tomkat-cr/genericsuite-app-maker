@@ -1556,7 +1556,7 @@ class StreamlitLib:
             return os.environ.get(param_name)
         return self.get_par_value(param_name, default_value)
 
-    def add_js_script(source: str):
+    def add_js_script(self, source: str):
         """
         Add a JS script to the page
         """
