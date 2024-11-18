@@ -27,6 +27,7 @@ Add the "Generate App Ideas" button to the App Ideation section.
 Add the X AI Grok model. 
 Add "timeframe" to ideation form.
 Add model advanced configuration (temperature, max. tokens, top P, frequency penalty, presense penalty)
+Add "add_js_script()" to inject any JS code to streamlit.
 
 ### Changes
 All prompts were enhanced.
