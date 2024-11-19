@@ -22,19 +22,23 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ---
 
 ### New
-Add ideation from a user's prompt in the App Ideation section.
-Add the "Generate App Ideas" button to the App Ideation section.
-Add the X AI Grok model. 
-Add "timeframe" to ideation form.
-Add model advanced configuration (temperature, max. tokens, top P, frequency penalty, presense penalty)
-Add "add_js_script()" to inject any JS code to streamlit.
+Add ideation from a user's prompt in the App Ideation section [GS-154].
+Add the "Generate App Ideas" button to the App Ideation section [GS-154].
+Add the X AI Grok model [GS-157]. 
+Add "timeframe" to ideation form [GS-154].
+Add model advanced configuration (temperature, max. tokens, top P, frequency penalty, presense penalty) [GS-154].
+Add "add_js_script()" to inject any JS code to streamlit [GS-155].
 
 ### Changes
 All prompts were enhanced.
+LLM_PROVIDERS, TEXT_TO_IMAGE_PROVIDERS, and TEXT_TO_VIDEO_PROVIDERS list were converted to dict with all the providers having a list of "requirements" and "active" attributes [GS-154].
 
 ### Fixes
-Fix the error when the image does not exist.
-Fix errors with the OpenAI image generation.
+Fix the error when the image does not exist [GS-154].
+Fix errors with the OpenAI image generation [GS-154].
+
+### Breaks
+LLM_PROVIDERS_COMPLETE_LIST config parameter removed. Instead the LLM_PROVIDERS list was converted to a dict with all the providers having a list of "requirements" and "active" attributes [GS-154].
 
 
 ## 0.1.0 (2024-11-10)
@@ -84,7 +88,7 @@ Add image generation [GS-152].
 Add the video gallery page [GS-153].
 Add the image gallery page [GS-55].
 Add MongoDB support [GS-152].
-Add Together.AI support [GS-119].
+Add Together.AI support [GS-158].
 Add Meta Llama models support [GS-119].
 Add prompt enhancement support [GS-152].
 Add data management pull down section in the side bar [GS-152].

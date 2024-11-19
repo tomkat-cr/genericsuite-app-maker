@@ -25,32 +25,45 @@
     "SUGGESTIONS_QTY": 4,
     "REFINE_VIDEO_PROMPT_TEXT": "[refine_video_prompt.txt]",
     "REFINE_LLM_PROMPT_TEXT": "[refine_llm_prompt.txt]",
-    "LLM_PROVIDERS_COMPLETE_LIST": [
-        "openai",
-        "groq",
-        "ollama",
-        "rhymes",
-        "nvidia",
-        "huggingface",
-        "together_ai",
-        "xai"
-    ],
+    "LLM_PROVIDERS": {
+        "openai": {
+            "requirements": ["OPENAI_API_KEY"]
+        },
+        "groq": {
+            "requirements": ["GROQ_API_KEY"],
+            "active:": true
+        },
+        "ollama": {
+            "requirements": [],
+            "active:": true
+        },
+        "rhymes": {
+            "requirements": ["RHYMES_ARIA_API_KEY"],
+            "active:": true
+        },
+        "nvidia": {
+            "requirements": ["NVIDIA_API_KEY"],
+            "active:": true
+        },
+        "huggingface": {
+            "requirements": ["HUGGINGFACE_API_KEY"],
+            "active:": true
+        },
+        "together_ai": {
+            "requirements": ["TOGETHER_AI_API_KEY"],
+            "active:": true
+        },
+        "xai": {
+            "requirements": ["XAI_API_KEY"],
+            "active:": true
+        }
+    },
     "NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS": [
         "nvidia"
     ],
     "NO_SYSTEM_PROMPT_ALLOWED_MODELS": [
         "o1-preview",
         "o1-mini"
-    ],
-    "LLM_PROVIDERS": [
-        "together_ai",
-        "groq",
-        "openai",
-        "ollama",
-        "rhymes",
-        "nvidia",
-        "huggingface",
-        "xai"
     ],
     "LLM_AVAILABLE_MODELS": {
         "openai": [
@@ -88,10 +101,16 @@
             "grok-beta"
         ]
     },
-    "TEXT_TO_IMAGE_PROVIDERS": [
-        "huggingface",
-        "openai"
-    ],
+    "TEXT_TO_IMAGE_PROVIDERS": {
+        "huggingface": {
+            "requirements": ["HUGGINGFACE_API_KEY"],
+            "active:": true
+        },
+        "openai": {
+            "requirements": ["OPENAI_API_KEY"],
+            "active:": true
+        }
+    },
     "TEXT_TO_IMAGE_AVAILABLE_MODELS": {
         "openai": [
             "dall-e-3",
@@ -102,9 +121,12 @@
             "black-forest-labs/FLUX.1-dev"
         ]
     },
-    "TEXT_TO_VIDEO_PROVIDERS": [
-        "rhymes"
-    ],
+    "TEXT_TO_VIDEO_PROVIDERS": {
+        "rhymes": {
+            "requirements": ["RHYMES_ALLEGRO_API_KEY"],
+            "active:": true
+        }
+    },
     "TEXT_TO_VIDEO_AVAILABLE_MODELS": {
         "rhymes": [
             "allegro"

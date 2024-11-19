@@ -263,7 +263,8 @@ def add_models_selection():
     """
     Add the models selection to the page
     """
-    available_llm_providers = cgsl.get_par_value("LLM_PROVIDERS")
+    # available_llm_providers = cgsl.get_par_value("LLM_PROVIDERS")
+    available_llm_providers = cgsl.get_available_ai_providers("LLM_PROVIDERS")
     llm_provider_index = cgsl.get_llm_provider_index(
         "LLM_PROVIDERS",
         "llm_provider")
@@ -271,7 +272,9 @@ def add_models_selection():
         "LLM_PROVIDERS", "llm_provider",
         "LLM_AVAILABLE_MODELS", "llm_model")
 
-    available_image_providers = cgsl.get_par_value("TEXT_TO_IMAGE_PROVIDERS")
+    # available_image_providers = cgsl.get_par_value("TEXT_TO_IMAGE_PROVIDERS")
+    available_image_providers = cgsl.get_available_ai_providers(
+        "TEXT_TO_IMAGE_PROVIDERS")
     image_provider_index = cgsl.get_llm_provider_index(
         "TEXT_TO_IMAGE_PROVIDERS",
         "image_provider")
@@ -279,7 +282,9 @@ def add_models_selection():
         "TEXT_TO_IMAGE_PROVIDERS", "image_provider",
         "TEXT_TO_IMAGE_AVAILABLE_MODELS", "image_model")
 
-    available_video_providers = cgsl.get_par_value("TEXT_TO_VIDEO_PROVIDERS")
+    # available_video_providers = cgsl.get_par_value("TEXT_TO_VIDEO_PROVIDERS")
+    available_video_providers = cgsl.get_available_ai_providers(
+        "TEXT_TO_VIDEO_PROVIDERS")
     video_provider_index = cgsl.get_llm_provider_index(
         "TEXT_TO_VIDEO_PROVIDERS",
         "video_provider")

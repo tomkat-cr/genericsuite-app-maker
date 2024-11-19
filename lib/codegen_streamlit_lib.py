@@ -6,6 +6,7 @@ import os
 import time
 import json
 import uuid
+import html
 
 import streamlit as st
 
@@ -1078,6 +1079,31 @@ class StreamlitLib:
 
     # AI
 
+    def get_available_ai_providers(
+        self,
+        param_name: str,
+        param_values: dict = None
+    ) -> list:
+        """
+        Returns the available LLM providers based on the environment variables
+        The model will be available if all its variables are set
+        """
+        if not param_values:
+            param_values = os.environ
+        result = []
+        for model_name, model_attr in self.get_par_value(param_name).items():
+            if not model_attr.get("active", True):
+                continue
+            model_to_add = model_name
+            requirements = model_attr.get("requirements", [])
+            for var_name in requirements:
+                if not param_values.get(var_name):
+                    model_to_add = None
+                    break
+            if model_to_add:
+                result.append(model_to_add)
+        return result
+
     def get_llm_provider(
         self,
         param_name: str,
@@ -1087,7 +1113,11 @@ class StreamlitLib:
         Returns the LLM provider
         """
         if session_state_key not in st.session_state:
-            return self.get_par_value(param_name)[0]
+            # return self.get_par_value(param_name)[0]
+            provider_list = self.get_available_ai_providers(param_name)
+            if not provider_list:
+                return ''
+            return provider_list[0]
         return st.session_state.get(session_state_key)
 
     def get_llm_model(
@@ -1132,7 +1162,7 @@ class StreamlitLib:
         param_name: str,
         session_state_key: str
     ):
-        available_llm_providers = self.get_par_value(param_name)
+        available_llm_providers = self.get_available_ai_providers(param_name)
         try:
             llm_provider_index = available_llm_providers.index(
                 self.get_llm_provider(
@@ -1207,7 +1237,8 @@ class StreamlitLib:
         """
         llm_parameters = {
             "llm_providers_complete_list":
-                self.get_par_value("LLM_PROVIDERS_COMPLETE_LIST"),
+                # self.get_par_value("LLM_PROVIDERS_COMPLETE_LIST"),
+                self.get_par_value("LLM_PROVIDERS", {}).keys(),
             "no_system_prompt_allowed_providers":
                 self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS"),
             "no_system_prompt_allowed_models":
@@ -1571,9 +1602,11 @@ class StreamlitLib:
                     var script = document.createElement('script'); \
                     script.type = 'text/javascript'; \
                     script.text = {html.escape(repr(source))}; \
-                    var div = window.parent.document.getElementById('{div_id}'); \
+                    var div = window.parent.document."""
+                    """getElementById('{div_id}'); \
                     div.appendChild(script); \
-                    div.parentElement.parentElement.parentElement.style.display = 'none'; \
+                    div.parentElement.parentElement.parentElement."""
+                    """style.display = 'none'; \
                 "/>
             </div>
         """, unsafe_allow_html=True)
