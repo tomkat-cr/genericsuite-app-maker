@@ -1092,6 +1092,12 @@ class StreamlitLib:
             param_values = os.environ
         result = []
         for model_name, model_attr in self.get_par_value(param_name).items():
+            # log_debug(f"get_available_ai_providers | "
+            #           '\nmodel_attr.get("active", True): '
+            #           f'{model_attr.get("active", True)}'
+            #           f"\nmodel_name: {model_name} | "
+            #           f"\nmodel_attr: {model_attr}",
+            #           debug=DEBUG)
             if not model_attr.get("active", True):
                 continue
             model_to_add = model_name
