@@ -26,36 +26,36 @@
     "REFINE_VIDEO_PROMPT_TEXT": "[refine_video_prompt.txt]",
     "REFINE_LLM_PROMPT_TEXT": "[refine_llm_prompt.txt]",
     "LLM_PROVIDERS": {
+        "together_ai": {
+            "requirements": ["TOGETHER_AI_API_KEY"],
+            "active": true
+        },
         "openai": {
             "requirements": ["OPENAI_API_KEY"]
         },
         "groq": {
             "requirements": ["GROQ_API_KEY"],
-            "active:": true
+            "active": true
         },
         "ollama": {
             "requirements": [],
-            "active:": true
+            "active": false
         },
         "rhymes": {
             "requirements": ["RHYMES_ARIA_API_KEY"],
-            "active:": true
+            "active": true
         },
         "nvidia": {
             "requirements": ["NVIDIA_API_KEY"],
-            "active:": true
+            "active": true
         },
         "huggingface": {
             "requirements": ["HUGGINGFACE_API_KEY"],
-            "active:": true
-        },
-        "together_ai": {
-            "requirements": ["TOGETHER_AI_API_KEY"],
-            "active:": true
+            "active": true
         },
         "xai": {
             "requirements": ["XAI_API_KEY"],
-            "active:": true
+            "active": true
         }
     },
     "NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS": [
@@ -104,11 +104,11 @@
     "TEXT_TO_IMAGE_PROVIDERS": {
         "huggingface": {
             "requirements": ["HUGGINGFACE_API_KEY"],
-            "active:": true
+            "active": true
         },
         "openai": {
             "requirements": ["OPENAI_API_KEY"],
-            "active:": true
+            "active": true
         }
     },
     "TEXT_TO_IMAGE_AVAILABLE_MODELS": {
@@ -124,7 +124,7 @@
     "TEXT_TO_VIDEO_PROVIDERS": {
         "rhymes": {
             "requirements": ["RHYMES_ALLEGRO_API_KEY"],
-            "active:": true
+            "active": true
         }
     },
     "TEXT_TO_VIDEO_AVAILABLE_MODELS": {
