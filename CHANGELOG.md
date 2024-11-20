@@ -17,8 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Breaks
 
 
-## Unreleased
-## 0.2.0 (2024-11-11)
+## 0.2.0 (2024-11-19)
 ---
 
 ### New
