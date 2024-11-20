@@ -26,6 +26,10 @@
     "REFINE_VIDEO_PROMPT_TEXT": "[refine_video_prompt.txt]",
     "REFINE_LLM_PROMPT_TEXT": "[refine_llm_prompt.txt]",
     "LLM_PROVIDERS": {
+        "together_ai": {
+            "requirements": ["TOGETHER_AI_API_KEY"],
+            "active:": true
+        },
         "openai": {
             "requirements": ["OPENAI_API_KEY"]
         },
@@ -35,7 +39,7 @@
         },
         "ollama": {
             "requirements": [],
-            "active:": true
+            "active:": false
         },
         "rhymes": {
             "requirements": ["RHYMES_ARIA_API_KEY"],
@@ -47,10 +51,6 @@
         },
         "huggingface": {
             "requirements": ["HUGGINGFACE_API_KEY"],
-            "active:": true
-        },
-        "together_ai": {
-            "requirements": ["TOGETHER_AI_API_KEY"],
             "active:": true
         },
         "xai": {
