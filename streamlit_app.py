@@ -12,11 +12,14 @@ from lib.codegen_utilities import log_debug
 from src.codegen_schema_generator import JsonGenerator
 from src.codegen_app_ideation import (
     show_ideation_form,
-    # get_features_data,
-    # get_fields_data,
-    get_form_config,
+    show_ideation_from_prompt,
+    get_ideation_form_config,
+    get_ideation_from_prompt_config,
 )
-
+from src.codegen_buttons import (
+    add_buttons_for_main_tab,
+    add_buttons_for_code_gen_tab,
+)
 
 DEBUG = True
 
@@ -89,20 +92,21 @@ def process_use_response_as_prompt():
     st.session_state.use_response_as_prompt_flag = False
 
 
-def process_ideation_form(form: dict):
+def process_ideation_form(form: dict, form_config: dict):
     """
     Process the ideation form
     """
-    result_container = st.empty()
-    log_debug("process_ideation_form | form: " + f"{form}", debug=DEBUG)
-
-    form_config = get_form_config()
+    result_container = st.container()
     features_data = form_config.get("features_data", {})
     fields_data = form_config.get("fields", {})
 
+    log_debug("process_ideation_form | form: " + f"{form}", debug=DEBUG)
+    log_debug("process_ideation_form | form_config: " + f"{features_data}",
+              debug=DEBUG)
+
     # Validates the submitted form
     if not form:
-        cgsl.show_form_error("Invalid form")
+        cgsl.show_form_error("No data received from the form")
         return
     if not form.get("buttons_submitted_data"):
         cgsl.show_form_error("Missing buttons submitted data")
@@ -168,7 +172,8 @@ def process_ideation_form(form: dict):
               debug=DEBUG)
 
     # Call the LLM to generate the ideation
-    response = cgsl.text_generation(result_container, question, other_data)
+    response = cgsl.text_generation(result_container, question, other_data,
+                                    {"assign_global": False})
 
     log_debug("process_ideation_form | response: " + f"{response}",
               debug=DEBUG)
@@ -245,7 +250,7 @@ def add_suggestions():
     suggestion_container = st.empty()
     cgsl.show_suggestion_components(suggestion_container)
 
-    # Show the siderbar selected conversarion's question and answer in the
+    # Show the siderbar selected conversation's question and answer in the
     # main section
     # (must be done before the user input)
     for conversation in st.session_state.conversations:
@@ -258,7 +263,8 @@ def add_models_selection():
     """
     Add the models selection to the page
     """
-    available_llm_providers = cgsl.get_par_value("LLM_PROVIDERS")
+    # available_llm_providers = cgsl.get_par_value("LLM_PROVIDERS")
+    available_llm_providers = cgsl.get_available_ai_providers("LLM_PROVIDERS")
     llm_provider_index = cgsl.get_llm_provider_index(
         "LLM_PROVIDERS",
         "llm_provider")
@@ -266,7 +272,9 @@ def add_models_selection():
         "LLM_PROVIDERS", "llm_provider",
         "LLM_AVAILABLE_MODELS", "llm_model")
 
-    available_image_providers = cgsl.get_par_value("TEXT_TO_IMAGE_PROVIDERS")
+    # available_image_providers = cgsl.get_par_value("TEXT_TO_IMAGE_PROVIDERS")
+    available_image_providers = cgsl.get_available_ai_providers(
+        "TEXT_TO_IMAGE_PROVIDERS")
     image_provider_index = cgsl.get_llm_provider_index(
         "TEXT_TO_IMAGE_PROVIDERS",
         "image_provider")
@@ -274,13 +282,21 @@ def add_models_selection():
         "TEXT_TO_IMAGE_PROVIDERS", "image_provider",
         "TEXT_TO_IMAGE_AVAILABLE_MODELS", "image_model")
 
-    available_video_providers = cgsl.get_par_value("TEXT_TO_VIDEO_PROVIDERS")
+    # available_video_providers = cgsl.get_par_value("TEXT_TO_VIDEO_PROVIDERS")
+    available_video_providers = cgsl.get_available_ai_providers(
+        "TEXT_TO_VIDEO_PROVIDERS")
     video_provider_index = cgsl.get_llm_provider_index(
         "TEXT_TO_VIDEO_PROVIDERS",
         "video_provider")
     video_model_index = cgsl.get_llm_model_index(
         "TEXT_TO_VIDEO_PROVIDERS", "video_provider",
         "TEXT_TO_VIDEO_AVAILABLE_MODELS", "video_model")
+
+    # log_debug("image_provider_index: " + f"{image_provider_index}",
+    #           debug=DEBUG)
+    # log_debug("image_model_index: " + f"{image_model_index}", debug=DEBUG)
+    # log_debug("video_provider_index: " + f"{video_provider_index}",
+    #           debug=DEBUG)
 
     with st.expander("Models Selection"):
         # LLM Provider and Model
@@ -346,6 +362,74 @@ def add_models_selection():
                 index=video_model_index,
                 help="Select the model to use for the text-to-video call")
 
+    with st.expander("Model configuration (advanced)"):
+        # Temperature slider | default: 1.00
+        col = st.columns(4, gap="small", vertical_alignment="bottom")
+        with col[0]:
+            st.slider(
+                "Temperature",
+                min_value=0.0,
+                max_value=2.0,
+                value=0.5,
+                step=0.01,
+                key="model_config_par_temperature",
+                help="Controls the randomness of the output. Lower values make"
+                     " the output more deterministic.",
+            )
+
+        # Max tokens slider | default: 2048
+        col = st.columns(4, gap="small", vertical_alignment="bottom")
+        with col[0]:
+            st.slider(
+                "Max Tokens",
+                min_value=0,
+                max_value=4095,
+                value=2048,
+                step=1,
+                key="model_config_par_max_tokens",
+                help="The maximum number of tokens to generate.",
+            )
+
+        # Top P slider | default: 1.00
+        col = st.columns(4, gap="small", vertical_alignment="bottom")
+        with col[0]:
+            st.slider(
+                "Top P",
+                min_value=0.0,
+                max_value=1.0,
+                value=1.0,
+                step=0.01,
+                key="model_config_par_top_p",
+                help="The cumulative probability of the top tokens to"
+                     " generate.",
+            )
+
+        # Frequency penalty slider | default: 0.00
+        col = st.columns(4, gap="small", vertical_alignment="bottom")
+        with col[0]:
+            st.slider(
+                "Frequency Penalty",
+                min_value=0.0,
+                max_value=2.0,
+                value=0.0,
+                step=0.01,
+                key="model_config_par_frequency_penalty",
+                help="The higher the value, the more diverse the output.",
+            )
+
+        # Presence penalty slider | default: 0.00
+        col = st.columns(4, gap="small", vertical_alignment="bottom")
+        with col[0]:
+            st.slider(
+                "Presence Penalty",
+                min_value=0.0,
+                max_value=2.0,
+                value=0.0,
+                step=0.01,
+                key="model_config_par_presence_penalty",
+                help="The higher the value, the more diverse the output.",
+            )
+
 
 def add_attachments():
     """
@@ -371,108 +455,6 @@ def add_user_input():
             st.session_state.question_label,
             st.session_state.question)
     return question
-
-
-def get_response_as_prompt_button_config(key_name: str):
-    """
-    Returns the response as prompt button config
-    """
-    return {
-        "text": "Use Response as Prompt",
-        "key": key_name,
-        "enable_config_name": "USE_RESPONSE_AS_PROMPT_ENABLED",
-        # "on_click": cgsl.use_response_as_prompt,
-        "on_click": cgsl.set_session_flag,
-        "args": (key_name, "use_response_as_prompt_flag"),
-    }
-
-
-def get_prompt_enhancement_button_config(key_name: str):
-    """
-    Returns the prompt enhancement button config
-    """
-    return {
-        "text": "Enhance prompt",
-        "key": key_name,
-        "type": "checkbox",
-        # "on_change": cgsl.prompt_enhancement,
-        "on_change": cgsl.set_session_flag,
-        "args": (key_name, "prompt_enhancement_flag"),
-    }
-
-
-def get_use_embeddings_button_config(key_name: str):
-    """
-    Returns the use embeddings button config
-    """
-    return {
-        "text": "Use Embeddings",
-        "key": key_name,
-        "type": "checkbox",
-        "enable_config_name": "USE_EMBEDDINGS_ENABLED",
-        "on_change": cgsl.set_session_flag,
-        "args": (key_name, "use_embeddings_flag"),
-    }
-
-
-def add_buttons_for_main_tab():
-    """
-    Add the main tab buttons section to the page
-    """
-    with st.container():
-        buttons_config = [
-            {
-                "text": "Answer Question",
-                "key": "generate_text",
-                "enable_config_name": "TEXT_GENERATION_ENABLED",
-            },
-            {
-                "text": "Generate Video",
-                "key": "generate_video",
-                "enable_config_name": "VIDEO_GENERATION_ENABLED",
-            },
-            {
-                "text": "Generate Image",
-                "key": "generate_image",
-                "enable_config_name": "IMAGE_GENERATION_ENABLED",
-            },
-            # {
-            #     "text": "",
-            #     "type": "spacer",
-            # },
-            get_response_as_prompt_button_config(
-                "use_response_as_prompt_main_tab"),
-            get_prompt_enhancement_button_config(
-                "prompt_enhancement_main_tab"),
-        ]
-        cgsl.show_buttons_row(buttons_config)
-
-
-def add_buttons_for_code_gen_tab():
-    """
-    Add the code generation tab buttons section to the page
-    """
-    with st.container():
-        buttons_config = [
-            {
-                "text": "Generate Config & Tools Code",
-                "key": "generate_code",
-                "enable_config_name": "CODE_GENERATION_ENABLED",
-            },
-            get_use_embeddings_button_config(
-                "use_embeddings_code_gen_tab",
-            ),
-            {
-                "text": "Start App Code",
-                "key": "start_app_code",
-                "enable_config_name": "START_APP_CODE_ENABLED",
-            },
-            get_response_as_prompt_button_config(
-                "use_response_as_prompt_code_gen_tab"),
-            get_prompt_enhancement_button_config(
-                "prompt_enhancement_code_gen_tab"),
-        ]
-        cgsl.show_buttons_row(buttons_config)
 
 
 def add_results_containers():
@@ -571,6 +553,11 @@ def add_check_buttons_pushed(
             container=data_management_container)
         st.session_state.dm_results = None
 
+    # Process the ideation-from-prompt buttons
+    cgsl.process_no_form_buttons(
+        "ideation_from_prompt", question,
+        show_ideation_from_prompt, process_ideation_form)
+
 
 def add_footer():
     """
@@ -631,7 +618,12 @@ def page_1():
         # Form
         form = show_ideation_form(tab2)
         if form:
-            process_ideation_form(form)
+            process_ideation_form(form, get_ideation_form_config())
+
+        # Idea from prompt
+        st.session_state.forms_config["ideation_from_prompt"] = \
+            get_ideation_from_prompt_config()
+        show_ideation_from_prompt(tab2, "show_form")
 
     with tab3:
         # Buttons
@@ -655,7 +647,7 @@ def page_1():
         additional_result_container,
         data_management_container,
         parameters_container,
-        question
+        question,
     )
 
     # Footer
@@ -703,6 +695,8 @@ def main():
         cgsl.update_conversations()
     if "question_label" not in st.session_state:
         get_question_label()
+    if "forms_config" not in st.session_state:
+        st.session_state.forms_config = {}
 
     # Streamlit app code
     st.set_page_config(

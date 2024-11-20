@@ -1,9 +1,9 @@
 {
     "APP_NAME": "GSAM",
-    "APP_VERSION": "0.1.0",
-    "MAKER_MAME": "The FynBots",
+    "APP_VERSION": "0.2.0",
+    "MAKER_MAME": "Carlos J. Ramirez",
     "APP_ICON": ":sparkles:",
-    "APP_DESCRIPTION": "The GenericSuite App Maker (GSAM) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the GenericSuite libraries.",
+    "APP_DESCRIPTION": "GenericSuite App Maker (GSAM) is a tool designed to streamline the app development process. It supports ideation, naming, presentation, AI models evaluation, configuration and code generation compatible with GenericSuite library.",
     "CONVERSATION_DB_PATH": "./db/conversations.json",
     "DEFAULT_PAGE": "home",
     "CODE_GENERATION_ENABLED": true,
@@ -25,15 +25,39 @@
     "SUGGESTIONS_QTY": 4,
     "REFINE_VIDEO_PROMPT_TEXT": "[refine_video_prompt.txt]",
     "REFINE_LLM_PROMPT_TEXT": "[refine_llm_prompt.txt]",
-    "LLM_PROVIDERS_COMPLETE_LIST": [
-        "chat_openai",
-        "groq",
-        "ollama",
-        "rhymes",
-        "nvidia",
-        "huggingface",
-        "together_ai"
-    ],
+    "LLM_PROVIDERS": {
+        "openai": {
+            "requirements": ["OPENAI_API_KEY"]
+        },
+        "groq": {
+            "requirements": ["GROQ_API_KEY"],
+            "active:": true
+        },
+        "ollama": {
+            "requirements": [],
+            "active:": true
+        },
+        "rhymes": {
+            "requirements": ["RHYMES_ARIA_API_KEY"],
+            "active:": true
+        },
+        "nvidia": {
+            "requirements": ["NVIDIA_API_KEY"],
+            "active:": true
+        },
+        "huggingface": {
+            "requirements": ["HUGGINGFACE_API_KEY"],
+            "active:": true
+        },
+        "together_ai": {
+            "requirements": ["TOGETHER_AI_API_KEY"],
+            "active:": true
+        },
+        "xai": {
+            "requirements": ["XAI_API_KEY"],
+            "active:": true
+        }
+    },
     "NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS": [
         "nvidia"
     ],
@@ -41,12 +65,8 @@
         "o1-preview",
         "o1-mini"
     ],
-    "LLM_PROVIDERS": [
-        "together_ai",
-        "groq"
-    ],
     "LLM_AVAILABLE_MODELS": {
-        "chat_openai": [
+        "openai": [
             "gpt-4o",
             "gpt-4o-mini"
         ],
@@ -76,24 +96,37 @@
             "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
             "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
             "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
+        ],
+        "xai": [
+            "grok-beta"
         ]
     },
-    "TEXT_TO_IMAGE_PROVIDERS": [
-        "huggingface",
-        "openai"
-    ],
+    "TEXT_TO_IMAGE_PROVIDERS": {
+        "huggingface": {
+            "requirements": ["HUGGINGFACE_API_KEY"],
+            "active:": true
+        },
+        "openai": {
+            "requirements": ["OPENAI_API_KEY"],
+            "active:": true
+        }
+    },
     "TEXT_TO_IMAGE_AVAILABLE_MODELS": {
         "openai": [
-            "dall-e-3"
+            "dall-e-3",
+            "gpt-4o"
         ],
         "huggingface":[
             "black-forest-labs/FLUX.1-schnell",
             "black-forest-labs/FLUX.1-dev"
         ]
     },
-    "TEXT_TO_VIDEO_PROVIDERS": [
-        "rhymes"
-    ],
+    "TEXT_TO_VIDEO_PROVIDERS": {
+        "rhymes": {
+            "requirements": ["RHYMES_ALLEGRO_API_KEY"],
+            "active:": true
+        }
+    },
     "TEXT_TO_VIDEO_AVAILABLE_MODELS": {
         "rhymes": [
             "allegro"

@@ -16,6 +16,9 @@ def prepare_model_params(model_params: dict, naming: dict = None) -> dict:
     naming = naming or {
         "model_name": "model",
     }
+    # Parameters reference:
+    # https://platform.openai.com/docs/api-reference/chat/create
+
     # Prepare the OpenAI client configurations
     client_config = {}
     for key in ["base_url", "api_key"]:
@@ -27,7 +30,8 @@ def prepare_model_params(model_params: dict, naming: dict = None) -> dict:
     for key in ["model", "model_name", "messages", "stop"]:
         if model_params.get(key):
             model_config[naming.get(key, key)] = model_params[key]
-    for key in ["temperature", "top_p"]:
+    for key in ["temperature", "top_p", "frequency_penalty",
+                "presence_penalty"]:
         if model_params.get(key):
             model_config[naming.get(key, key)] = \
                 float(model_params[key])
@@ -41,68 +45,6 @@ def prepare_model_params(model_params: dict, naming: dict = None) -> dict:
         "client_config": client_config,
         "model_config": model_config,
     }
-
-
-# class OpenAiCompletionsAbstract:
-#     """
-#     Abstract class to simulate the OpenAI completions API
-#     """
-#     def __init__(self, parent_llm_provider: Any):
-#         self.parent_llm_provider: parent_llm_provider
-
-#     def create(self, **kwargs):
-#         """
-#         Simulate the OpenAI completions API create method
-#         """
-#         # naming = None
-#         # configs = prepare_model_params(kwargs, naming)
-
-#         prompt = None
-#         question = None
-#         prompt_enhancement_text = kwargs.get("prompt_enhancement_text")
-#         unified = False
-
-#         if "messages" not in kwargs:
-#             # Error: No messages provided
-#             raise ValueError("No messages provided [1]")
-
-#         if len(kwargs["messages"]) < 1:
-#             # Error: No messages provided
-#             raise ValueError("No messages provided [2]")
-
-#         if len(kwargs["messages"]) > 1:
-#             prompt = kwargs["messages"][0]["content"]
-#             question = kwargs["messages"][1]["content"]
-#         else:
-#             question = kwargs["messages"][0]["content"]
-#             unified = True
-
-#         return self.parent_llm_provider.query(
-#             prompt=prompt,
-#             question=question,
-#             prompt_enhancement_text=prompt_enhancement_text,
-#             unified=unified,
-#         )
-
-
-# class OpenAiChatAbstract:
-#     """
-#     Abstract class to simulate the OpenAI chat API
-#     E.g.
-#     .........
-#         response = ""
-#         llm_response = client.chat.completions.create(**model_config)
-#         if model_config.get('stream', False):
-#             for chunk in llm_response:
-#                 if chunk.choices[0].delta.content is not None:
-#                     print(chunk.choices[0].delta.content, end="")
-#                     response += chunk.choices[0].delta.content
-#         else:
-#             response = llm_response.choices[0].message.content
-#     .........
-#     """
-#     def __init__(self, parent_llm_provider: Any):
-#         self.completions = OpenAiCompletionsAbstract(parent_llm_provider)
 
 
 class LlmProviderAbstract:
@@ -428,4 +370,3 @@ class LlmProviderAbstract:
            self.llm.params.get("no_system_prompt_allowed_models", []):
             unified = True
         return unified
-

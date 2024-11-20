@@ -4,6 +4,10 @@ Generic database
 from lib.codegen_db_abstracts import DatabaseAbstract
 from lib.codegen_db_json import JsonFileDatabase
 from lib.codegen_db_mongodb import MongoDBDatabase
+# from lib.codegen_utilities import log_debug
+
+
+DEBUG = True
 
 
 class CodegenDatabase(DatabaseAbstract):
@@ -31,6 +35,10 @@ class CodegenDatabase(DatabaseAbstract):
             if not uri or not db_name or not collection_name:
                 raise ValueError("Invalid MONGODB_URI, MONGODB_DB_NAME or "
                                  "MONGODB_COLLECTION_NAME in other_data")
+            # log_debug(f"CodegenDatabase | "
+            #           f"uri: {uri} | db_name: {db_name} | "
+            #           f"collection_name: {collection_name}",
+            #           debug=DEBUG)
             self.db = MongoDBDatabase(uri, db_name, collection_name)
         else:
             raise ValueError("Invalid db_type. Must be 'json' or 'mongodb'")

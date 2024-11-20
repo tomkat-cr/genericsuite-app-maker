@@ -1,6 +1,6 @@
-Generate the application description and detailed table definitions for the idea of `{title}`, a `{web_or_mobile}` software application about `{application_subject}`.
+Generate the application description and detailed table definitions for a software application idea about `{question}`.
 
-Please include specific information focusing on the details of database tables that are part of the `{application_subject}` idea. The information should include:
+Please include specific information focusing on the details of database tables that are part of the application idea. The information should include:
 - Table Name
 - Table Description
 - Field Name

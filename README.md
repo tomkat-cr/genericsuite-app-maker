@@ -230,7 +230,7 @@ Video Gallery
 
 ## Context
 
-This project was developed as part of the [Llama Impact Hackathon](https://lablab.ai/event/llama-impact-hackathon) organized by [Lablab.ai](https://lablab.ai) and happened on November 1st to 4rd, 2024.
+This project was developed as part of the [Llama Impact Hackathon](https://lablab.ai/event/llama-impact-hackathon) organized by [Lablab.ai](https://lablab.ai).
 
 ![Hackathon banner image](./assets/llama-impact-hackathon-official-banner.webp)
 

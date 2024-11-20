@@ -1,11 +1,12 @@
 """
 Streamlit UI library
 """
-from typing import Any
+from typing import Any, Callable
 import os
 import time
 import json
 import uuid
+import html
 
 import streamlit as st
 
@@ -15,6 +16,8 @@ from lib.codegen_utilities import (
     get_new_item_id,
     get_default_resultset,
     read_file,
+    is_an_url,
+    path_exists,
 )
 from lib.codegen_db import CodegenDatabase
 from lib.codegen_ai_utilities import (
@@ -297,10 +300,15 @@ class StreamlitLib:
         """
         prompt = st.session_state.suggestions_prompt_text + \
             "\n\n" + self.get_par_value("SUGGESTIONS_PROMPT_SUFFIX")
+        prompt = prompt.replace(
+            "{qty}",
+            str(self.get_par_value("SUGGESTIONS_QTY", 4)))
+        # st.session_state.suggestion = self.get_suggestions_from_ai(
+        #     prompt,
+        #     self.get_par_value("SUGGESTIONS_QTY", 4)
+        # )
         st.session_state.suggestion = self.get_suggestions_from_ai(
-            prompt,
-            self.get_par_value("SUGGESTIONS_QTY", 4)
-        )
+            prompt, "{subject}")
 
     def show_one_suggestion(self, suggestion: Any):
         """
@@ -342,6 +350,10 @@ class StreamlitLib:
             elif not st.session_state.get("suggestion"):
                 st.session_state.suggestion = \
                     self.get_par_value("DEFAULT_SUGGESTIONS")
+
+        if not isinstance(st.session_state.suggestion, dict):
+            st.session_state.suggestion = \
+                self.get_par_value("DEFAULT_SUGGESTIONS")
 
         # Show the 4 suggestions in the main section
         if "error" in st.session_state.suggestion:
@@ -402,11 +414,20 @@ class StreamlitLib:
         for conversation in st.session_state.conversations:
             col1, col2 = st.columns(2, gap="small")
             with col1:
+                title = conversation['question']
+                title = title.replace("```json", "")
+                title = title.replace("```", "")
+                title = title.replace("\t", " ")
+                title = title.replace("\n", " ")
+                title = title.replace("\r", " ")
+                title = title.strip()
+                help_msg = \
+                    f"{conversation['type'].capitalize()} generated on " \
+                    f"{conversation['date_time']}\n\nID: {conversation['id']}"
                 st.button(
-                    conversation['question'][:title_length],
+                    title[:title_length],
                     key=f"{conversation['id']}",
-                    help=f"{conversation['type'].capitalize()} generated on " +
-                        f"{conversation['date_time']}")
+                    help=help_msg)
             with col2:
                 st.button(
                     "x",
@@ -447,6 +468,33 @@ class StreamlitLib:
         with st.expander("Detailed Response"):
             st.write(conversation)
 
+    def show_cloud_resource(self, url: str, resource_type: str):
+        if resource_type == "image":
+            st.image(url)
+        elif resource_type == "video":
+            st.video(url)
+        else:
+            st.write(f"Not a video or image: {url}")
+
+    def show_local_resource(self, url: str, resource_type: str):
+        if resource_type in ["image", "video"]:
+            return self.show_cloud_resource(url, resource_type)
+        with open(url, "rb") as url:
+            st.download_button(
+                label="Download File",
+                data=url,
+                file_name=os.path.basename(url)
+            )
+
+    def verify_and_show_resource(self, url: str, resource_type: str):
+        if is_an_url(url):
+            self.show_cloud_resource(url, resource_type)
+            return
+        if not path_exists(url):
+            st.write(f"ERROR E-IG-101: file not found: {url}")
+        else:
+            self.show_local_resource(url, resource_type)
+
     def show_conversation_content(
         self,
         id: str, container: st.container,
@@ -478,12 +526,13 @@ class StreamlitLib:
                         self.show_conversation_debug(conversation)
                         for url in conversation['answer']:
                             st.write(f"Video URL: {url}")
-                            container.video(url)
+                            self.verify_and_show_resource(url, "video")
                 else:
                     with container.container():
                         self.show_conversation_debug(conversation)
                         st.write(f"Video URL: {conversation['answer']}")
-                        st.video(conversation['answer'])
+                        self.verify_and_show_resource(
+                            conversation['answer'], "video")
             else:
                 self.video_generation(
                     result_container=container,
@@ -497,11 +546,12 @@ class StreamlitLib:
                     with container.container():
                         self.show_conversation_debug(conversation)
                         for url in conversation['answer']:
-                            st.image(url)
+                            self.verify_and_show_resource(url, "image")
                 else:
                     with container.container():
                         self.show_conversation_debug(conversation)
-                        st.image(conversation['answer'])
+                        self.verify_and_show_resource(
+                            conversation['answer'], "image")
             else:
                 with container.container():
                     self.show_conversation_debug(conversation)
@@ -524,18 +574,9 @@ class StreamlitLib:
                             on_click=self.create_pptx,
                             args=(conversation,))
                         if conversation.get("presentation_file_path"):
-                            with open(conversation["presentation_file_path"],
-                                      "rb") as pptx_file:
-                                st.download_button(
-                                    label="Download Presentation",
-                                    data=pptx_file,
-                                    file_name=os.path.basename(
-                                        conversation["presentation_file_path"]
-                                    ),
-                                    # mime="application/vnd.openxmlformats"
-                                    #      "-officedocument.presentationml"
-                                    #      ".presentation",
-                                )
+                            self.verify_and_show_resource(
+                                conversation["presentation_file_path"],
+                                "other")
 
     def show_conversation_question(self, id: str):
         if not id:
@@ -556,7 +597,7 @@ class StreamlitLib:
                 #           f"{st.session_state[form_session_state_key]}",
                 #           debug=DEBUG)
 
-    def validate_question(self, question: str):
+    def validate_question(self, question: str, assign_global: bool = True):
         """
         Validate the question
         """
@@ -564,7 +605,8 @@ class StreamlitLib:
             st.write("Please enter a question / prompt")
             return False
         # Update the user input in the conversation
-        st.session_state.question = question
+        if assign_global:
+            st.session_state.question = question
         return True
 
     # Data management
@@ -677,7 +719,7 @@ class StreamlitLib:
         submitted = None
         button_type = button_config.get("type", "button")
         if button_type == "checkbox":
-            container.checkbox(
+            submitted = container.checkbox(
                 button_config["text"],
                 key=button_config["key"],
                 **extra_kwargs)
@@ -688,7 +730,7 @@ class StreamlitLib:
                 button_config["text"])
         else:
             # Defaults to button
-            container.button(
+            submitted = container.button(
                 button_config["text"],
                 key=button_config["key"],
                 **extra_kwargs)
@@ -752,7 +794,8 @@ class StreamlitLib:
         return submitted
 
     def get_buttons_submitted_data(self, buttons_submitted: list,
-                                   buttons_data: dict):
+                                   buttons_data: dict,
+                                   submit_button_verification: bool = True):
         """
         Reduce the list of buttons submitted to a single boolean value
         to determine if the form was submitted
@@ -768,7 +811,8 @@ class StreamlitLib:
 
             curr_item = 0
             for i in range(len(buttons_data)):
-                if buttons_data[i].get("type") == "submit":
+                if not submit_button_verification or \
+                   buttons_data[i].get("type") == "submit":
                     if buttons_data[i].get("enable_config_name", None):
                         if self.get_par_value(
                                 buttons_data[i]["enable_config_name"], True):
@@ -805,11 +849,21 @@ class StreamlitLib:
             if not field.get("enabled", True):
                 continue
             value = form_data.get(key, "")
-            if field.get("type") == "radio":
+            if field.get("type") == "selectbox":
+                field_value = st.selectbox(
+                    field.get("title"),
+                    field.get("options", []),
+                    # key=key,  # If this is set, the value is not assigned
+                    help=field.get("help"),
+                    index=self.get_option_index(
+                        options=field.get("options", []),
+                        value=value),
+                )
+            elif field.get("type") == "radio":
                 field_value = st.radio(
                     field.get("title"),
                     field.get("options", []),
-                    # key=key,  # If this is st, the value is not assigned
+                    # key=key,  # If this is set, the value is not assigned
                     help=field.get("help"),
                     index=self.get_option_index(
                         options=field.get("options", []),
@@ -819,14 +873,14 @@ class StreamlitLib:
                 field_value = st.text_input(
                     field.get("title"),
                     value,
-                    # key=key,  # If this is st, the value is not assigned
+                    # key=key,  # If this is set, the value is not assigned
                     help=field.get("help"),
                 )
             else:
                 field_value = st.text_area(
                     field.get("title"),
                     value,
-                    # key=key,  # If this is st, the value is not assigned
+                    # key=key,  # If this is set, the value is not assigned
                     help=field.get("help"),
                 )
             fields_values[key] = field_value
@@ -854,6 +908,9 @@ class StreamlitLib:
         """
         Returns the selected feature
         """
+        log_debug(f"get_selected_feature | form: {form}", debug=DEBUG)
+        log_debug(f"get_selected_feature | features_data: {features_data}",
+                  debug=DEBUG)
         selected_feature = None
         for key in form.get("buttons_submitted_data"):
             for feature in features_data:
@@ -880,7 +937,7 @@ class StreamlitLib:
             f"{form_name}_data")
         return form_session_state_key
 
-    def show_form(self, container: st.container, form_config: dict):
+    def show_form(self, form_config: dict):
         """
         Show the configured form
         """
@@ -896,7 +953,7 @@ class StreamlitLib:
         if form_name in st.session_state:
             del st.session_state[form_name]
 
-        with container.form(form_name):
+        with st.form(form_name):
             st.title(form_config.get("title", "Application Form"))
 
             if form_config.get("subtitle"):
@@ -927,6 +984,51 @@ class StreamlitLib:
             "buttons_submitted_data": buttons_submitted_data
         })
         return st.session_state[form_session_state_key]
+
+    # No-form processing
+    def process_no_form_buttons(
+        self,
+        forms_config_name: str,
+        question: str,
+        process_form_func: Callable,
+        submit_form_func: Callable
+    ):
+        """
+        Process No-Form buttons, like the ones for the
+        the ideation-from-prompt feature
+        """
+
+        ideation_from_prompt_config = \
+            st.session_state.forms_config[forms_config_name]
+        ideation_from_prompt_buttons_config = \
+            ideation_from_prompt_config.get("buttons_config")
+        i = 0
+        buttons_submitted = []
+        process_form = False
+        for button in ideation_from_prompt_buttons_config:
+            button_was_clicked = True if st.session_state.get(button["key"]) \
+                                else False
+            if button_was_clicked:
+                process_form = True
+            buttons_submitted.append(button_was_clicked)
+            i += 1
+        data = {
+            "buttons_submitted": buttons_submitted,
+            "question": question,
+        }
+        if process_form:
+            form = process_form_func(None, "process_form", data)
+            if not question:
+                self.show_form_error("No question / prompt to process")
+            else:
+                # Assign here the question to the session state because
+                # the question assignment in the process_form_func()
+                # when it call the llm is suppressed, to preserve the
+                # original question
+                st.session_state.question = question
+                submit_form_func(
+                    form,
+                    ideation_from_prompt_config)
 
     # PPTX generation
 
@@ -977,6 +1079,31 @@ class StreamlitLib:
 
     # AI
 
+    def get_available_ai_providers(
+        self,
+        param_name: str,
+        param_values: dict = None
+    ) -> list:
+        """
+        Returns the available LLM providers based on the environment variables
+        The model will be available if all its variables are set
+        """
+        if not param_values:
+            param_values = os.environ
+        result = []
+        for model_name, model_attr in self.get_par_value(param_name).items():
+            if not model_attr.get("active", True):
+                continue
+            model_to_add = model_name
+            requirements = model_attr.get("requirements", [])
+            for var_name in requirements:
+                if not param_values.get(var_name):
+                    model_to_add = None
+                    break
+            if model_to_add:
+                result.append(model_to_add)
+        return result
+
     def get_llm_provider(
         self,
         param_name: str,
@@ -986,7 +1113,11 @@ class StreamlitLib:
         Returns the LLM provider
         """
         if session_state_key not in st.session_state:
-            return self.get_par_value(param_name)[0]
+            # return self.get_par_value(param_name)[0]
+            provider_list = self.get_available_ai_providers(param_name)
+            if not provider_list:
+                return ''
+            return provider_list[0]
         return st.session_state.get(session_state_key)
 
     def get_llm_model(
@@ -1031,7 +1162,7 @@ class StreamlitLib:
         param_name: str,
         session_state_key: str
     ):
-        available_llm_providers = self.get_par_value("LLM_PROVIDERS")
+        available_llm_providers = self.get_available_ai_providers(param_name)
         try:
             llm_provider_index = available_llm_providers.index(
                 self.get_llm_provider(
@@ -1049,21 +1180,36 @@ class StreamlitLib:
         param_name: str,
         session_state_key: str
     ):
+        # log_debug(
+        #   f">> get_llm_model_index:"
+        #   f"\n | parent_param_name: {parent_param_name}"
+        #   f"\n | parent_session_state_key: {parent_session_state_key}"
+        #   f"\n | param_name: {param_name}"
+        #   f"\n | session_state_key: {session_state_key}",
+        #   debug=DEBUG)
         available_llm_models = self.get_model_options(
             parent_param_name,
             parent_session_state_key,
             param_name
         )
+        selected_llm_model = self.get_llm_model(
+            parent_param_name,
+            parent_session_state_key,
+            param_name,
+            session_state_key
+        )
+        # log_debug(f">> get_llm_model_index: "
+        #           "\n | available_llm_models: "
+        #           f"{available_llm_models}"
+        #           "\n | selected_llm_model: "
+        #           f"{selected_llm_model}", debug=DEBUG)
         try:
             llm_model_index = available_llm_models.index(
-                self.get_llm_model(
-                    parent_param_name,
-                    parent_session_state_key,
-                    param_name,
-                    session_state_key
-                ))
+                selected_llm_model)
         except ValueError:
             llm_model_index = 0
+        # log_debug(f">> get_llm_model_index | llm_model_index: "
+        #           f"{llm_model_index}", debug=DEBUG)
         return llm_model_index
 
     def set_session_flag(self, session_state_key: str,
@@ -1074,18 +1220,31 @@ class StreamlitLib:
                 flag = True
         st.session_state[flag_session_state_key] = flag
 
+    def get_model_configurations(self):
+        """
+        Returns the model configurations
+        """
+        model_configurations = {}
+        for key in st.session_state:
+            if key.startswith("model_config_par_"):
+                par_name = key.replace("model_config_par_", "")
+                model_configurations[par_name] = st.session_state[key]
+        return model_configurations
+
     def get_llm_text_model(self):
         """
         Returns the LLM text model
         """
         llm_parameters = {
             "llm_providers_complete_list":
-                self.get_par_value("LLM_PROVIDERS_COMPLETE_LIST"),
+                # self.get_par_value("LLM_PROVIDERS_COMPLETE_LIST"),
+                self.get_par_value("LLM_PROVIDERS", {}).keys(),
             "no_system_prompt_allowed_providers":
                 self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS"),
             "no_system_prompt_allowed_models":
                 self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_MODELS"),
         }
+        llm_parameters.update(self.get_model_configurations())
 
         result = get_default_resultset()
         result["llm_provider"] = self.get_llm_provider(
@@ -1109,13 +1268,16 @@ class StreamlitLib:
         return result
 
     def text_generation(self, result_container: st.container,
-                        question: str = None, other_data: dict = None):
-        if not question:
-            question = st.session_state.question
-        if not self.validate_question(question):
-            return
+                        question: str = None, other_data: dict = None,
+                        settings: dict = None):
         if not other_data:
             other_data = {}
+        if not settings:
+            settings = {}
+        if not question:
+            question = st.session_state.question
+        if not self.validate_question(question, settings.get("assign_global")):
+            return
         llm_text_model_elements = self.get_llm_text_model()
         if llm_text_model_elements['error']:
             result_container.write(
@@ -1128,8 +1290,8 @@ class StreamlitLib:
         with st.spinner("Procesing text generation..."):
             # Generating answer
             llm_text_model = llm_text_model_elements['class']
-
             prompt = "{question}"
+
             response = llm_text_model.query(
                 prompt, question,
                 (self.get_par_value("REFINE_LLM_PROMPT_TEXT") if
@@ -1149,10 +1311,13 @@ class StreamlitLib:
             st.rerun()
 
     def image_generation(self, result_container: st.container,
-                         question: str = None):
+                         question: str = None,
+                         settings: dict = None):
+        if not settings:
+            settings = {}
         if not question:
             question = st.session_state.question
-        if not self.validate_question(question):
+        if not self.validate_question(question, settings.get("assign_global")):
             return
         llm_provider = self.get_llm_provider(
             "TEXT_TO_IMAGE_PROVIDERS",
@@ -1174,12 +1339,16 @@ class StreamlitLib:
             "ai_text_model_model": llm_text_model_elements['llm_model'],
         }
         with st.spinner("Procesing image generation..."):
-            llm_model = ImageGenProvider({
+            model_params = {
                 # "provider": self.get_par_or_env("TEXT_TO_IMAGE_PROVIDER"),
                 "provider": llm_provider,
                 "model_name": llm_model,
                 "text_model_class": llm_text_model_elements['class'],
-            })
+            }
+            model_params.update(self.get_model_configurations())
+
+            llm_model = ImageGenProvider(model_params)
+
             response = llm_model.image_gen(
                 question,
                 (self.get_par_value("REFINE_LLM_PROMPT_TEXT") if
@@ -1204,8 +1373,11 @@ class StreamlitLib:
         self,
         result_container: st.container,
         question: str = None,
-        previous_response: dict = None
+        previous_response: dict = None,
+        settings: dict = None
     ):
+        if not settings:
+            settings = {}
         llm_provider = self.get_llm_provider(
             "TEXT_TO_VIDEO_PROVIDERS",
             "video_provider"
@@ -1221,12 +1393,15 @@ class StreamlitLib:
                 f"ERROR E-100-C: {llm_text_model_elements['error_message']}")
             return
 
-        ttv_model = TextToVideoProvider({
+        model_params = {
             # "provider": self.get_par_or_env("TEXT_TO_VIDEO_PROVIDER"),
             "provider": llm_provider,
             "model_name": llm_model,
             "text_model_class": llm_text_model_elements['class'],
-        })
+        }
+        model_params.update(self.get_model_configurations())
+        ttv_model = TextToVideoProvider(model_params)
+
         if previous_response:
             response = previous_response.copy()
             video_id = response['id']
@@ -1234,7 +1409,8 @@ class StreamlitLib:
             video_id = get_new_item_id()
             if not question:
                 question = st.session_state.question
-            if not self.validate_question(question):
+            if not self.validate_question(question,
+               settings.get("assign_global")):
                 return
             with st.spinner("Requesting the video generation..."):
                 # Requesting the video generation
@@ -1410,3 +1586,27 @@ class StreamlitLib:
         if os.environ.get(param_name):
             return os.environ.get(param_name)
         return self.get_par_value(param_name, default_value)
+
+    def add_js_script(self, source: str):
+        """
+        Add a JS script to the page
+        """
+        # Reference:
+        # Injecting JS?
+        # https://discuss.streamlit.io/t/injecting-js/22651/5?u=carlos9
+        # The following snippet could help you solve your cross-origin issue:
+        div_id = uuid.uuid4()
+        st.markdown(f"""
+            <div style="display:none" id="{div_id}">
+                <iframe src="javascript: \
+                    var script = document.createElement('script'); \
+                    script.type = 'text/javascript'; \
+                    script.text = {html.escape(repr(source))}; \
+                    var div = window.parent.document."""
+                    """getElementById('{div_id}'); \
+                    div.appendChild(script); \
+                    div.parentElement.parentElement.parentElement."""
+                    """style.display = 'none'; \
+                "/>
+            </div>
+        """, unsafe_allow_html=True)
