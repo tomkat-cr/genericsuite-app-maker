@@ -16,6 +16,19 @@ def prepare_model_params(model_params: dict, naming: dict = None) -> dict:
     naming = naming or {
         "model_name": "model",
     }
+    model_params_naming = {
+        "o1": [
+            ("max_tokens", "max_completion_tokens", ),
+        ],
+        "o1-preview": [
+            ("max_tokens", "max_completion_tokens", ),
+        ],
+        "o1-mini": [
+            ("max_tokens", "max_completion_tokens", ),
+        ]
+    }
+    forced_values = model_params.get("llm_model_forced_values", {})
+
     # Parameters reference:
     # https://platform.openai.com/docs/api-reference/chat/create
 
@@ -41,6 +54,54 @@ def prepare_model_params(model_params: dict, naming: dict = None) -> dict:
     for key in ["stream"]:
         if model_params.get(key):
             model_config[naming.get(key, key)] = model_params[key] == "1"
+    # Rename model parameters depending on the model name
+    log_debug(f"CODEGEN_AI_ABSTRACTS.PY | prepare_model_params"
+              f"\n | model_params: {model_params}",
+              debug=DEBUG)
+
+    # Special cases
+    if model_params.get("model"):
+
+        # Model parameters renaming
+        if model_params["model"] in model_params_naming:
+            log_debug(
+                "CODEGEN_AI_ABSTRACTS.PY | prepare_model_params"
+                f"\n | model_params[model]: {model_params['model']} "
+                f"\n | model_params_naming[model_params[\"model\"]]: "
+                f"{model_params_naming[model_params['model']]} "
+                f"\n | model_params_naming: {model_params_naming}",
+                debug=DEBUG)
+            for rename_from, rename_to in \
+                    model_params_naming[model_params["model"]]:
+                log_debug(
+                    "CODEGEN_AI_ABSTRACTS.PY | prepare_model_params"
+                    f"\n | REVIEW rename elements: {rename_from}, {rename_to}",
+                    debug=DEBUG)
+                if model_params.get(rename_from):
+                    log_debug(
+                        "CODEGEN_AI_ABSTRACTS.PY | prepare_model_params"
+                        f"\n | ACTION rename: {rename_from}, {rename_to}",
+                        debug=DEBUG)
+                    model_config[rename_to] = model_params[rename_from]
+                    del model_config[rename_from]
+
+        # Model parameters forced values
+        if model_params["model"] in forced_values:
+            log_debug(
+                "CODEGEN_AI_ABSTRACTS.PY | prepare_model_params"
+                f"\n | model_params[model]: {model_params['model']} "
+                f"\n | forced_values[model_params[\"model\"]]: "
+                f"{forced_values[model_params['model']]} "
+                f"\n | forced_values: {forced_values}",
+                debug=DEBUG)
+            for key, value in forced_values[model_params["model"]].items():
+                model_config[key] = value
+
+    log_debug(f"CODEGEN_AI_ABSTRACTS.PY | prepare_model_params"
+              f"\n | client_config: {client_config}"
+              f"\n | model_config: {model_config}",
+              debug=DEBUG)
+
     return {
         "client_config": client_config,
         "model_config": model_config,
@@ -59,7 +120,7 @@ class LlmProviderAbstract:
         self.naming = self.params.get("naming") or {
             "model_name": "model",
         }
-        # self.chat = OpenAiChatAbstract(self)
+        self.llm = None
 
     def init_llm(self):
         """
@@ -360,13 +421,26 @@ class LlmProviderAbstract:
 
     def get_unified_flag(self):
         """
-        Returns the unified flag
+        Returns the unified flag.
+        Returns:
+            bool: True if the model or provider is not allowed
+                  to have a system prompt
         """
         unified = False
-        if self.llm.params.get("llm_provider") in \
-           self.llm.params.get("no_system_prompt_allowed_providers", []):
+        nspa_provider = \
+            self.params.get("no_system_prompt_allowed_providers", [])
+        nspa_model = self.params.get("no_system_prompt_allowed_models", [])
+        log_debug(
+            "GET_UNIFIED_FLAG # 1" +
+            f"\n| provider: {self.provider}" +
+            f"\n| model: {self.model_name}" +
+            f"\n| nspa_provider: {nspa_provider}" +
+            f"\n| nspa_model: {nspa_model}",
+            debug=DEBUG)
+        if self.provider in nspa_provider or self.model_name in nspa_model:
             unified = True
-        if self.llm.params.get("llm_model") in \
-           self.llm.params.get("no_system_prompt_allowed_models", []):
-            unified = True
+        log_debug(
+            "GET_UNIFIED_FLAG # 2" +
+            f"\n| unified: {unified}",
+            debug=DEBUG)
         return unified

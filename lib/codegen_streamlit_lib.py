@@ -247,30 +247,40 @@ class StreamlitLib:
         """
         Get suggestions from the AI
         """
-        result = get_default_resultset()
-        llm_provider = self.get_llm_provider(
-            "LLM_PROVIDERS",
-            "llm_provider"
-        )
-        llm_model = self.get_llm_model(
-            "LLM_PROVIDERS", "llm_provider",
-            "LLM_AVAILABLE_MODELS", "llm_model"
-        )
-        if not llm_provider:
-            result["error"] = True
-            result["error_message"] = "LLM Provider not selected"
-        if not llm_model:
-            result["error"] = True
-            result["error_message"] = "LLM Model not selected"
-        if result["error"]:
-            log_debug(f"get_suggestions_from_ai | result ERROR: {result}",
-                      debug=DEBUG)
-            return result
-        llm_model = LlmProvider({
-            # "provider": self.get_par_or_env("LLM_PROVIDER"),
-            "provider": llm_provider,
-            "model_name": llm_model,
-        })
+
+        # result = get_default_resultset()
+        # llm_provider = self.get_llm_provider(
+        #     "LLM_PROVIDERS",
+        #     "llm_provider"
+        # )
+        # llm_model = self.get_llm_model(
+        #     "LLM_PROVIDERS", "llm_provider",
+        #     "LLM_AVAILABLE_MODELS", "llm_model"
+        # )
+        # if not llm_provider:
+        #     result["error"] = True
+        #     result["error_message"] = "LLM Provider not selected"
+        # if not llm_model:
+        #     result["error"] = True
+        #     result["error_message"] = "LLM Model not selected"
+        # if result["error"]:
+        #     log_debug(f"get_suggestions_from_ai | result ERROR: {result}",
+        #               debug=DEBUG)
+        #     return result
+        # llm_model = LlmProvider({
+        #     "provider": llm_provider,
+        #     "model_name": llm_model,
+        # })
+
+        # Get the model class
+        model_replacement = self.get_par_value("SUGGESTIONS_MODEL_REPLACEMENT")
+        llm_text_model = self.get_llm_text_model(model_replacement)
+        if llm_text_model['error']:
+            log_debug("get_suggestions_from_ai | llm_text_model "
+                      f"ERROR: {llm_text_model}", debug=DEBUG)
+            return llm_text_model
+        llm_model = llm_text_model['class']
+        # Get the suggestions from the AI
         llm_response = llm_model.query(prompt, qty)
         log_debug("get_suggestions_from_ai | " +
                   f"response: {llm_response}", debug=DEBUG)
@@ -278,6 +288,7 @@ class StreamlitLib:
             log_debug("get_suggestions_from_ai | llm_response "
                       f"ERROR: {llm_response}", debug=DEBUG)
             return llm_response
+        # Clean the suggestions response
         suggestions = llm_response['response']
         suggestions = suggestions.replace("\n", "")
         suggestions = suggestions.replace("\r", "")
@@ -285,6 +296,7 @@ class StreamlitLib:
         suggestions = suggestions.strip()
         suggestions = suggestions.replace('```json', '')
         suggestions = suggestions.replace('```', '')
+        # Load the suggestions
         try:
             suggestions = json.loads(suggestions)
             log_debug("get_suggestions_from_ai | FINAL suggestions:"
@@ -303,10 +315,10 @@ class StreamlitLib:
         prompt = prompt.replace(
             "{qty}",
             str(self.get_par_value("SUGGESTIONS_QTY", 4)))
-        # st.session_state.suggestion = self.get_suggestions_from_ai(
-        #     prompt,
-        #     self.get_par_value("SUGGESTIONS_QTY", 4)
-        # )
+        prompt = prompt.replace(
+            "{timeframe}", str(self.get_par_value(
+                "SUGGESTIONS_DEFAULT_TIMEFRAME", "48 hours")))
+        # Get the suggestions from the selected LLM text model
         st.session_state.suggestion = self.get_suggestions_from_ai(
             prompt, "{subject}")
 
@@ -1237,7 +1249,7 @@ class StreamlitLib:
                 model_configurations[par_name] = st.session_state[key]
         return model_configurations
 
-    def get_llm_text_model(self):
+    def get_llm_text_model(self, model_replacement: dict = None):
         """
         Returns the LLM text model
         """
@@ -1249,8 +1261,15 @@ class StreamlitLib:
                 self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS"),
             "no_system_prompt_allowed_models":
                 self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_MODELS"),
+            "llm_model_forced_values":
+                self.get_par_value("LLM_MODEL_FORCED_VALUES"),
         }
+        log_debug("GET_LLM_TEXT_MODEL | llm_parameters # 1: "
+                  f"{llm_parameters}", debug=DEBUG)
+
         llm_parameters.update(self.get_model_configurations())
+        log_debug("GET_LLM_TEXT_MODEL | llm_parameters # 2: "
+                  f"{llm_parameters}", debug=DEBUG)
 
         result = get_default_resultset()
         result["llm_provider"] = self.get_llm_provider(
@@ -1268,6 +1287,11 @@ class StreamlitLib:
             result["error"] = True
             result["error_message"] = "LLM Model not selected"
         else:
+            if model_replacement:
+                # To avoid use the OpenAI reasoning models in the suggestions
+                result["llm_model"] = model_replacement.get(
+                    result["llm_model"], result["llm_model"])
+            # The llm parameters will be available in the LLM class
             llm_parameters["provider"] = result["llm_provider"]
             llm_parameters["model_name"] = result["llm_model"]
             result["class"] = LlmProvider(llm_parameters)

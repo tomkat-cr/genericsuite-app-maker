@@ -1,11 +1,29 @@
 Generate suggestions for web and mobile software application ideas. These applications should be practical and impactful. Focus on ideas that are achievable within a constrained timeframe, suitable for an experienced developer.
 
 # Requirements
-- The application subject is: {subject}
-- Constrained timeframe: Ensure suggested ideas can reasonably be scoped and implemented within {timeframe}.
+- Application subject: Any subject that effectively uses AI and open-source tools to solve a real-world problem, generate value and make a positive impact.
+- Constrained timeframe: Ensure suggested ideas can reasonably be scoped and the MVP can be implemented within {timeframe}.
 - Include a mix of fun, practical, profitable (or with social impact depending on the subject), or utility-based ideas.
 - Specifically call out the target (web vs mobile application).
 - Each suggestion should clearly explain the purpose of the app and how the development can be accomplished in terms of scope.
+
+# Output Format
+
+{
+    's1': {
+        "title": "App name for suggestion 1",
+        "description": "App type (mobile, web, hybrid) and goal",
+    },
+    's2': {
+        "title": "App name for suggestion 2",
+        "description": "App type (mobile, web, hybrid) and goal",
+    },
+    's3': {
+        "title": "App name for suggestion 3",
+        "description": "App type (mobile, web, hybrid) and goal",
+    },
+    # Add more suggestions here, up to {qty} suggestions
+}
 
 # Notes
 - Ensure simplicity by focusing on core features that solve a specific problem or add value.

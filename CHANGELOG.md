@@ -17,6 +17,24 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Breaks
 
 
+## Unreleased
+## 0.3.0 (2025-01-12)
+---
+
+### New
+Add AI/ML API provider and models [GS-55] [GS-156].
+Add SUGGESTIONS_MODEL_REPLACEMENT parameter to avoid use the OpenAI reasoning models in the suggestions generation [GS-55].
+Add SUGGESTIONS_DEFAULT_TIMEFRAME parameter to set the default timeframe to 48 hours for suggestions [GS-55].
+Add LLM_MODEL_FORCED_VALUES parameter to set fixed values for models like o1-preview that only accepts temperature=1 [GS-55].
+
+### Changes
+The suggestions generation prompt was enhanced to be one-shot, the suggestions {qty} was added, the {timeframe} token is replaced by the SUGGESTIONS_DEFAULT_TIMEFRAME parameter value and the application subject token {subject} was replaced by a more generic subject text [GS-55].
+
+### Fixes
+Fix the error "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead." using OpenAI o1-preview/o1-mini models.
+Fix the "unified" flag assignment in get_unified_flag() because it was returning False always [GS-55].
+
+
 ## 0.2.0 (2024-11-19)
 ---
 
