@@ -175,6 +175,7 @@ class StreamlitLib:
         self, type: str,
         question: str,
         answer: str,
+        title: str = None,
         refined_prompt: str = None,
         other_data: dict = None,
         id: str = None
@@ -184,9 +185,13 @@ class StreamlitLib:
         """
         if not id:
             id = get_new_item_id()
+        if not title:
+            title = self.generate_title_from_question(question)
+            title = title[:self.get_title_max_length()]
         db = self.init_db()
         item = {
             "type": type,
+            "title": title,
             "question": question,
             "answer": answer,
             "refined_prompt": refined_prompt,
@@ -375,17 +380,19 @@ class StreamlitLib:
             sug_col1, sug_col2, sug_col3 = st.columns(
                 3, gap="small",
             )
+            max_length = self.get_title_max_length()
             for i in range(self.get_par_value("SUGGESTIONS_QTY")):
+                suggestion = self.show_one_suggestion(
+                    st.session_state.suggestion.get(
+                        f"s{i+1}"))
+                suggestion = suggestion[:max_length] + "..." \
+                    if len(suggestion) > max_length else suggestion
                 if i % 2 != 0:
                     with sug_col1:
-                        sug_col1.button(self.show_one_suggestion(
-                            st.session_state.suggestion.get(
-                                f"s{i+1}")), key=f"s{i+1}")
+                        sug_col1.button(suggestion, key=f"s{i+1}")
                 else:
                     with sug_col2:
-                        sug_col2.button(self.show_one_suggestion(
-                            st.session_state.suggestion.get(
-                                f"s{i+1}")), key=f"s{i+1}")
+                        sug_col2.button(suggestion, key=f"s{i+1}")
             with sug_col3:
                 if self.get_par_value("DYNAMIC_SUGGESTIONS", True):
                     sug_col3.button(
@@ -415,24 +422,70 @@ class StreamlitLib:
                     self.show_one_suggestion(st.session_state.suggestion[key])
                 break
 
+    # Conversation titles
+
+    def get_title_max_length(self):
+        return self.get_par_value("CONVERSATION_TITLE_LENGTH", 100)
+
+    def get_title_from_question(self, question: str) -> str:
+        """
+        Returns the title from the question
+        """
+        title = question
+        title = title.replace("```json", "")
+        title = title.replace("```", "")
+        title = title.replace("\t", " ")
+        title = title.replace("\n", " ")
+        title = title.replace("\r", " ")
+        title = title.strip()
+        return title
+
+    def get_conversation_title(self, conversation: dict):
+        return conversation.get(
+            "title",
+            self.get_title_from_question(conversation['question'])
+        )
+
+    def generate_title_from_question(self, question: str) -> str:
+        """
+        Returns the title from the question
+        """
+        default_title = self.get_title_from_question(question)
+        title_length = self.get_title_max_length()
+        # Use small models for title generation
+        model_replacement = self.get_par_value("SUGGESTIONS_MODEL_REPLACEMENT")
+        llm_text_model = self.get_llm_text_model(model_replacement)
+        if llm_text_model['error']:
+            log_debug("generate_title_from_question | llm_text_model "
+                      f"ERROR: {llm_text_model}", debug=DEBUG)
+            return default_title
+        llm_model = llm_text_model['class']
+        # Prepare the prompt
+        prompt = "Give me a title for this question " \
+                 f"(max length: {title_length*2}): {question}"
+        # Get the title from the AI
+        llm_response = llm_model.query(prompt, unified=True)
+        log_debug("GENERATE_TITLE_FROM_QUESTION | " +
+                  f"response: {llm_response}", debug=DEBUG)
+        if llm_response['error']:
+            log_debug("generate_title_from_question | llm_response "
+                      f"ERROR: {llm_response}", debug=DEBUG)
+            return default_title
+        title = llm_response['response']
+        return title
+
     # Conversations management
 
     def show_conversations(self):
         """
         Show the conversations in the side bar
         """
-        title_length = self.get_par_value("CONVERSATION_TITLE_LENGTH")
+        title_length = self.get_title_max_length()
         st.header("Previous answers")
         for conversation in st.session_state.conversations:
             col1, col2 = st.columns(2, gap="small")
             with col1:
-                title = conversation['question']
-                title = title.replace("```json", "")
-                title = title.replace("```", "")
-                title = title.replace("\t", " ")
-                title = title.replace("\n", " ")
-                title = title.replace("\r", " ")
-                title = title.strip()
+                title = self.get_conversation_title(conversation)
                 help_msg = \
                     f"{conversation['type'].capitalize()} generated on " \
                     f"{conversation['date_time']}\n\nID: {conversation['id']}"

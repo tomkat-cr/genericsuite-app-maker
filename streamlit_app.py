@@ -192,6 +192,12 @@ def process_ideation_form(form: dict, form_config: dict):
             "No response. Check the Detailed Response section."),
         other_data=other_data,
     )
+
+    # Restore the original question if App Ideation from prompt was used
+    original_question = other_data.get("form_data", {}).get("question")
+    if original_question:
+        st.session_state.question = original_question
+
     st.rerun()
 
 
@@ -615,12 +621,12 @@ def page_1():
         add_buttons_for_main_tab()
 
     with tab2:
-        # Form
+        # Idea from Form
         form = show_ideation_form(tab2)
         if form:
             process_ideation_form(form, get_ideation_form_config())
 
-        # Idea from prompt
+        # Idea from Prompt
         st.session_state.forms_config["ideation_from_prompt"] = \
             get_ideation_from_prompt_config()
         show_ideation_from_prompt(tab2, "show_form")
