@@ -1,4 +1,4 @@
-Generate the application description and detailed table definitions for `{title}`, a `{web_or_mobile}` software application about the application subject.
+Generate the application description and detailed table definitions for a software application idea about the application subject.
 
 # Output Format
 
@@ -91,10 +91,7 @@ Provide the output in the following JSON format:
 - Include all necessary relationships and constraints that apply to fields (e.g., foreign keys).
 - Ensure that the long description adequately explains how each table is used within the context of the application and their relationships.
 - The language of the output should be in English.
-
-# Requirements
-
-- Please include specific information focusing on the details of database tables that are part of the `{application_subject}` idea. The information should include:
+- Please include specific information focusing on the details of database tables that are part of the application subject. The information should include:
 1. Table Name
 2. Table Description
 3. Field Name
@@ -102,8 +99,3 @@ Provide the output in the following JSON format:
 5. Field Length
 6. Primary Key
 7. Long description of the relationship between this table and the rest of tables.
-
-- The application subject is:
-```
-{application_subject}
-```

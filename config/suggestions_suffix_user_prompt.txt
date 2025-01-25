@@ -2,6 +2,7 @@
 
 - Provide the output in JSON format with keys as follows: `"s1"`, `"s2"`, `"s3"`, etc., with each suggestion's title and description.
 - Generate only {qty} suggestions.
+- Avoid include any other text before and after the JSON output.
 
 # Examples
 

@@ -1,4 +1,4 @@
-Enhance the [USER PROMPT] to make it clear, effective, and suitable for generating a video using a text-to-video AI model.
+Enhance the user prompt to make it clear, effective, and suitable for generating a video using a text-to-video AI model.
 
 # Steps
 
@@ -28,8 +28,3 @@ An enhanced version of the prompt that explicitly:
 - When enhancing the prompt for video, think visually. Explicitly describe scenes and transitions.
 - Include directions on how the video content is structured, such as sequence, timing, and visual focus, to guide the AI effectively.
 - Give me just the enhanced version of the prompt, no other text.
-
-[USER PROMPT]:
-```
-{question}
-```

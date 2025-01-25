@@ -3,7 +3,6 @@ Generate suggestions for web and mobile software application ideas. These applic
 # Requirements
 
 - Application subject: Any subject that effectively uses AI and open-source tools to solve a real-world problem, generate value and make a positive impact.
-- Constrained timeframe: Ensure suggested ideas can reasonably be scoped and the MVP can be implemented within {timeframe}.
 - Include a mix of fun, practical, profitable (or with social impact depending on the subject), or utility-based ideas.
 - Specifically call out the target (web vs mobile application).
 - Each suggestion should clearly explain the purpose of the app and how the development can be accomplished in terms of scope.

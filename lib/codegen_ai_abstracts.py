@@ -16,17 +16,7 @@ def prepare_model_params(model_params: dict, naming: dict = None) -> dict:
     naming = naming or {
         "model_name": "model",
     }
-    model_params_naming = {
-        "o1": [
-            ("max_tokens", "max_completion_tokens", ),
-        ],
-        "o1-preview": [
-            ("max_tokens", "max_completion_tokens", ),
-        ],
-        "o1-mini": [
-            ("max_tokens", "max_completion_tokens", ),
-        ]
-    }
+    model_params_naming = model_params.get("llm_model_params_naming", {})
     forced_values = model_params.get("llm_model_forced_values", {})
 
     # Parameters reference:
