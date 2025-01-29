@@ -9,12 +9,14 @@ from lib.codegen_streamlit_lib import StreamlitLib
 from lib.codegen_utilities import get_app_config
 from lib.codegen_utilities import log_debug
 
-from src.codegen_schema_generator import JsonGenerator
+from lib.codegen_schema_generator import JsonGenerator
+from lib.codegen_app_ideation_lib import (
+    get_ideation_form_config,
+    get_ideation_from_prompt_config,
+)
 from src.codegen_app_ideation import (
     show_ideation_form,
     show_ideation_from_prompt,
-    get_ideation_form_config,
-    get_ideation_from_prompt_config,
 )
 from src.codegen_buttons import (
     add_buttons_for_main_tab,

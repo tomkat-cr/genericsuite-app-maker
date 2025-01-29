@@ -2,24 +2,10 @@
 AI utilities
 """
 from lib.codegen_ai_abstracts import LlmProviderAbstract
-from lib.codegen_ai_provider_rhymes import (
-    AriaLlm,
-    AllegroLlm,
-)
 from lib.codegen_ai_provider_openai import (
     OpenaiLlm,
     OpenaiImageGen,
 )
-from lib.codegen_ai_provider_groq import GroqLlm
-from lib.codegen_ai_provider_nvidia import NvidiaLlm
-from lib.codegen_ai_provider_ollama import OllamaLlm
-from lib.codegen_ai_provider_together_ai import TogetherAiLlm
-from lib.codegen_ai_provider_huggingface import (
-    HuggingFaceLlm,
-    HuggingFaceImageGen,
-)
-from lib.codegen_ai_provider_xai import XaiLlm
-
 from lib.codegen_utilities import log_debug
 
 
@@ -36,19 +22,29 @@ class LlmProvider(LlmProviderAbstract):
            self.params.get("provider") == "chat_openai":
             self.llm = OpenaiLlm(self.params)
         elif self.params.get("provider") == "groq":
+            from lib.codegen_ai_provider_groq import GroqLlm
             self.llm = GroqLlm(self.params)
         elif self.params.get("provider") == "nvidia":
+            from lib.codegen_ai_provider_nvidia import NvidiaLlm
             self.llm = NvidiaLlm(self.params)
         elif self.params.get("provider") == "ollama":
+            from lib.codegen_ai_provider_ollama import OllamaLlm
             self.llm = OllamaLlm(self.params)
         elif self.params.get("provider") == "huggingface":
+            from lib.codegen_ai_provider_huggingface import HuggingFaceLlm
             self.llm = HuggingFaceLlm(self.params)
         elif self.params.get("provider") == "together_ai":
+            from lib.codegen_ai_provider_together_ai import TogetherAiLlm
             self.llm = TogetherAiLlm(self.params)
         elif self.params.get("provider") == "rhymes":
+            from lib.codegen_ai_provider_rhymes import AriaLlm
             self.llm = AriaLlm(self.params)
         elif self.params.get("provider") == "xai":
+            from lib.codegen_ai_provider_xai import XaiLlm
             self.llm = XaiLlm(self.params)
+        elif self.params.get("provider") == "openrouter":
+            from lib.codegen_ai_provider_openrouter import OpenRouterLlm
+            self.llm = OpenRouterLlm(self.params)
         else:
             raise ValueError(
                 f'Invalid LLM provider: {self.params.get("provider")}')
@@ -93,6 +89,7 @@ class ImageGenProvider(LlmProviderAbstract):
         self.params = params
         self.llm = None
         if self.params.get("provider") == "huggingface":
+            from lib.codegen_ai_provider_huggingface import HuggingFaceImageGen
             self.llm = HuggingFaceImageGen(self.params)
         elif self.params.get("provider") == "openai":
             self.llm = OpenaiImageGen(self.params)
@@ -133,6 +130,7 @@ class TextToVideoProvider(LlmProviderAbstract):
         self.params = params
         self.llm = None
         if self.params.get("provider") == "rhymes":
+            from lib.codegen_ai_provider_rhymes import AllegroLlm
             self.llm = AllegroLlm(self.params)
         elif self.params.get("provider") == "openai":
             raise NotImplementedError
