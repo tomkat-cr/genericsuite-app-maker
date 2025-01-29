@@ -20,6 +20,11 @@ from lib.codegen_ai_provider_huggingface import (
 )
 from lib.codegen_ai_provider_xai import XaiLlm
 
+from lib.codegen_utilities import log_debug
+
+
+DEBUG = True
+
 
 class LlmProvider(LlmProviderAbstract):
     """
@@ -27,7 +32,6 @@ class LlmProvider(LlmProviderAbstract):
     """
     def __init__(self, params: str):
         super().__init__(params)
-        self.llm = None
         if self.params.get("provider") == "openai" or \
            self.params.get("provider") == "chat_openai":
             self.llm = OpenaiLlm(self.params)
@@ -61,6 +65,17 @@ class LlmProvider(LlmProviderAbstract):
         Abstract method for querying the LLM
         """
         unified = unified or self.get_unified_flag()
+        log_debug(
+            "LLmProvider.query" +
+            f"\n| provider: {self.llm.params.get('provider')}" +
+            f"\n| model: {self.llm.params.get('model_name')}" +
+            f"\n| unified: {unified}" +
+            "\n| no_system_prompt_allowed_providers: "
+            f"{self.llm.params.get('no_system_prompt_allowed_providers')}" +
+            "\n| no_system_prompt_allowed_models: "
+            f"{self.llm.params.get('no_system_prompt_allowed_models')}",
+            DEBUG
+        )
         llm_response = self.llm.query(
             prompt=prompt,
             question=question,

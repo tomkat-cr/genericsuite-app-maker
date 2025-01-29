@@ -74,23 +74,30 @@ The `.env` file should have the following content:
 ```bash
 PYTHON_VERSION=3.10
 #
-# Together AI
-TOGETHER_AI_API_KEY=
+# AI Parameters
+#
+# OpenAI
+OPENAI_API_KEY=
 # HuggingFace
 HUGGINGFACE_API_KEY=
+# Together AI
+TOGETHER_AI_API_KEY=
+# AI/ML API
+AIMLAPI_API_KEY=
+# Groq
+GROQ_API_KEY=
+# X AI
+XAI_API_KEY=
 # RHYMES parameters
 RHYMES_ALLEGRO_API_KEY=
 RHYMES_ARIA_API_KEY=
-# OpenAI
-OPENAI_API_KEY=
-# Groq
-GROQ_API_KEY=
 # Ollama
-OLLAMA_BASE_URL=localhost:11434
+#OLLAMA_BASE_URL=localhost:11434
 # Nvidia
 NVIDIA_API_KEY=
 #
-# Database parameters
+# Database Parameters
+#
 DB_TYPE=mongodb
 # DB_TYPE=json
 #
@@ -103,7 +110,9 @@ MONGODB_COLLECTION_NAME=conversations
 # JSON_DB_PATH=./db/conversations.json
 ```
 
-Replace `TOGETHER_AI_API_KEY` and other access tokens with your actual Together.ai API key, OpenAI, Huggingface, Groq, Nvidia, and Rhymes API keys, respectively.
+Replace the `..._API_KEY` access tokens with your Together.ai, OpenAI, Huggingface, Groq, Nvidia, and Rhymes API keys, respectively.
+
+The API Keys specified in the `.env` file will enable the the corresponding LLMs, image generators, and video generators to be available in the Model Selection panel.
 
 To use a MongoDB database, comment out `DB_TYPE=json`, uncomment `# DB_TYPE=mongodb`, and replace `YOUR_MONGODB_URI`, `YOUR_MONGODB_DB_NAME`, and `YOUR_MONGODB_COLLECTION_NAME` with your actual MongoDB URI, database name, and collection name, respectively.
 

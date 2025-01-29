@@ -175,6 +175,7 @@ class StreamlitLib:
         self, type: str,
         question: str,
         answer: str,
+        title: str = None,
         refined_prompt: str = None,
         other_data: dict = None,
         id: str = None
@@ -184,9 +185,13 @@ class StreamlitLib:
         """
         if not id:
             id = get_new_item_id()
+        if not title:
+            title = self.generate_title_from_question(question)
+            title = title[:self.get_title_max_length()]
         db = self.init_db()
         item = {
             "type": type,
+            "title": title,
             "question": question,
             "answer": answer,
             "refined_prompt": refined_prompt,
@@ -240,44 +245,40 @@ class StreamlitLib:
         """
         Reset the suggestions prompt
         """
-        st.session_state.suggestions_prompt_text = \
-            self.get_par_value("SUGGESTIONS_PROMPT_TEXT")
+        prompt = self.get_par_value("SUGGESTIONS_PROMPT_TEXT")
+        prompt = prompt.format(
+            timeframe=self.get_par_value("SUGGESTIONS_DEFAULT_TIMEFRAME"),
+            app_type=self.get_par_value("SUGGESTIONS_DEFAULT_APP_TYPE"),
+            app_subject=self.get_par_value("SUGGESTIONS_DEFAULT_APP_SUBJECT"),
+            qty=self.get_par_value("SUGGESTIONS_QTY", 4),
+        )
+        st.session_state.suggestions_prompt_text = prompt
 
-    def get_suggestions_from_ai(self, prompt: str, qty: int = 4) -> dict:
+    def get_suggestions_from_ai(self, system_prompt: str, user_prompt: str
+                                ) -> dict:
         """
         Get suggestions from the AI
         """
-        result = get_default_resultset()
-        llm_provider = self.get_llm_provider(
-            "LLM_PROVIDERS",
-            "llm_provider"
-        )
-        llm_model = self.get_llm_model(
-            "LLM_PROVIDERS", "llm_provider",
-            "LLM_AVAILABLE_MODELS", "llm_model"
-        )
-        if not llm_provider:
-            result["error"] = True
-            result["error_message"] = "LLM Provider not selected"
-        if not llm_model:
-            result["error"] = True
-            result["error_message"] = "LLM Model not selected"
-        if result["error"]:
-            log_debug(f"get_suggestions_from_ai | result ERROR: {result}",
-                      debug=DEBUG)
-            return result
-        llm_model = LlmProvider({
-            # "provider": self.get_par_or_env("LLM_PROVIDER"),
-            "provider": llm_provider,
-            "model_name": llm_model,
-        })
-        llm_response = llm_model.query(prompt, qty)
+        # The model replacement for suggestions is to avoid use reasoning
+        # models like o1-preview/o1-mini because they are expensive and
+        # slow, and replace them with a less expensive model like GPT-4o-mini.
+        model_replacement = self.get_par_value("SUGGESTIONS_MODEL_REPLACEMENT")
+        llm_text_model = self.get_llm_text_model(model_replacement)
+        if llm_text_model['error']:
+            log_debug("get_suggestions_from_ai | llm_text_model "
+                      f"ERROR: {llm_text_model}", debug=DEBUG)
+            return llm_text_model
+        # Get the model class
+        llm_model = llm_text_model['class']
+        # Get the suggestions from the AI
+        llm_response = llm_model.query(system_prompt, user_prompt)
         log_debug("get_suggestions_from_ai | " +
                   f"response: {llm_response}", debug=DEBUG)
         if llm_response['error']:
             log_debug("get_suggestions_from_ai | llm_response "
                       f"ERROR: {llm_response}", debug=DEBUG)
             return llm_response
+        # Clean the suggestions response
         suggestions = llm_response['response']
         suggestions = suggestions.replace("\n", "")
         suggestions = suggestions.replace("\r", "")
@@ -285,6 +286,8 @@ class StreamlitLib:
         suggestions = suggestions.strip()
         suggestions = suggestions.replace('```json', '')
         suggestions = suggestions.replace('```', '')
+        suggestions = suggestions.replace("\\'", '')
+        # Load the suggestions
         try:
             suggestions = json.loads(suggestions)
             log_debug("get_suggestions_from_ai | FINAL suggestions:"
@@ -298,17 +301,21 @@ class StreamlitLib:
         """
         Recycle the suggestions from the AI
         """
-        prompt = st.session_state.suggestions_prompt_text + \
+        system_prompt = self.get_par_value("SUGGESTIONS_PROMPT_SYSTEM")
+        # Prepare user prompt from the input text in the main form
+        user_prompt = st.session_state.suggestions_prompt_text + \
             "\n\n" + self.get_par_value("SUGGESTIONS_PROMPT_SUFFIX")
-        prompt = prompt.replace(
+        # Add the suggestion quantity
+        user_prompt = user_prompt.replace(
             "{qty}",
             str(self.get_par_value("SUGGESTIONS_QTY", 4)))
-        # st.session_state.suggestion = self.get_suggestions_from_ai(
-        #     prompt,
-        #     self.get_par_value("SUGGESTIONS_QTY", 4)
-        # )
+        # Add the timeframe
+        user_prompt = user_prompt.replace(
+            "{timeframe}", str(self.get_par_value(
+                "SUGGESTIONS_DEFAULT_TIMEFRAME", "48 hours")))
+        # Get the suggestions from the selected LLM text model
         st.session_state.suggestion = self.get_suggestions_from_ai(
-            prompt, "{subject}")
+            system_prompt, user_prompt)
 
     def show_one_suggestion(self, suggestion: Any):
         """
@@ -363,17 +370,19 @@ class StreamlitLib:
             sug_col1, sug_col2, sug_col3 = st.columns(
                 3, gap="small",
             )
+            max_length = self.get_title_max_length()
             for i in range(self.get_par_value("SUGGESTIONS_QTY")):
+                suggestion = self.show_one_suggestion(
+                    st.session_state.suggestion.get(
+                        f"s{i+1}"))
+                suggestion = suggestion[:max_length] + "..." \
+                    if len(suggestion) > max_length else suggestion
                 if i % 2 != 0:
                     with sug_col1:
-                        sug_col1.button(self.show_one_suggestion(
-                            st.session_state.suggestion.get(
-                                f"s{i+1}")), key=f"s{i+1}")
+                        sug_col1.button(suggestion, key=f"s{i+1}")
                 else:
                     with sug_col2:
-                        sug_col2.button(self.show_one_suggestion(
-                            st.session_state.suggestion.get(
-                                f"s{i+1}")), key=f"s{i+1}")
+                        sug_col2.button(suggestion, key=f"s{i+1}")
             with sug_col3:
                 if self.get_par_value("DYNAMIC_SUGGESTIONS", True):
                     sug_col3.button(
@@ -403,24 +412,70 @@ class StreamlitLib:
                     self.show_one_suggestion(st.session_state.suggestion[key])
                 break
 
+    # Conversation titles
+
+    def get_title_max_length(self):
+        return self.get_par_value("CONVERSATION_TITLE_LENGTH", 100)
+
+    def get_title_from_question(self, question: str) -> str:
+        """
+        Returns the title from the question
+        """
+        title = question
+        title = title.replace("```json", "")
+        title = title.replace("```", "")
+        title = title.replace("\t", " ")
+        title = title.replace("\n", " ")
+        title = title.replace("\r", " ")
+        title = title.strip()
+        return title
+
+    def get_conversation_title(self, conversation: dict):
+        return conversation.get(
+            "title",
+            self.get_title_from_question(conversation['question'])
+        )
+
+    def generate_title_from_question(self, question: str) -> str:
+        """
+        Returns the title from the question
+        """
+        default_title = self.get_title_from_question(question)
+        title_length = self.get_title_max_length()
+        # Use small models for title generation
+        model_replacement = self.get_par_value("SUGGESTIONS_MODEL_REPLACEMENT")
+        llm_text_model = self.get_llm_text_model(model_replacement)
+        if llm_text_model['error']:
+            log_debug("generate_title_from_question | llm_text_model "
+                      f"ERROR: {llm_text_model}", debug=DEBUG)
+            return default_title
+        llm_model = llm_text_model['class']
+        # Prepare the prompt
+        prompt = "Give me a title for this question " \
+                 f"(max length: {title_length*2}): {question}"
+        # Get the title from the AI
+        llm_response = llm_model.query(prompt, "", unified=True)
+        log_debug("GENERATE_TITLE_FROM_QUESTION | " +
+                  f"response: {llm_response}", debug=DEBUG)
+        if llm_response['error']:
+            log_debug("generate_title_from_question | llm_response "
+                      f"ERROR: {llm_response}", debug=DEBUG)
+            return default_title
+        title = llm_response['response']
+        return title
+
     # Conversations management
 
     def show_conversations(self):
         """
         Show the conversations in the side bar
         """
-        title_length = self.get_par_value("CONVERSATION_TITLE_LENGTH")
+        title_length = self.get_title_max_length()
         st.header("Previous answers")
         for conversation in st.session_state.conversations:
             col1, col2 = st.columns(2, gap="small")
             with col1:
-                title = conversation['question']
-                title = title.replace("```json", "")
-                title = title.replace("```", "")
-                title = title.replace("\t", " ")
-                title = title.replace("\n", " ")
-                title = title.replace("\r", " ")
-                title = title.strip()
+                title = self.get_conversation_title(conversation)
                 help_msg = \
                     f"{conversation['type'].capitalize()} generated on " \
                     f"{conversation['date_time']}\n\nID: {conversation['id']}"
@@ -1237,7 +1292,7 @@ class StreamlitLib:
                 model_configurations[par_name] = st.session_state[key]
         return model_configurations
 
-    def get_llm_text_model(self):
+    def get_llm_text_model(self, model_replacement: dict = None):
         """
         Returns the LLM text model
         """
@@ -1249,8 +1304,17 @@ class StreamlitLib:
                 self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_PROVIDERS"),
             "no_system_prompt_allowed_models":
                 self.get_par_value("NO_SYSTEM_PROMPT_ALLOWED_MODELS"),
+            "llm_model_forced_values":
+                self.get_par_value("LLM_MODEL_FORCED_VALUES"),
+            "llm_model_params_naming":
+                self.get_par_value("LLM_MODEL_PARAMS_NAMING"),
         }
+        log_debug("GET_LLM_TEXT_MODEL | llm_parameters # 1: "
+                  f"{llm_parameters}", debug=DEBUG)
+
         llm_parameters.update(self.get_model_configurations())
+        log_debug("GET_LLM_TEXT_MODEL | llm_parameters # 2: "
+                  f"{llm_parameters}", debug=DEBUG)
 
         result = get_default_resultset()
         result["llm_provider"] = self.get_llm_provider(
@@ -1268,6 +1332,11 @@ class StreamlitLib:
             result["error"] = True
             result["error_message"] = "LLM Model not selected"
         else:
+            if model_replacement:
+                # To avoid use the OpenAI reasoning models in the suggestions
+                result["llm_model"] = model_replacement.get(
+                    result["llm_model"], result["llm_model"])
+            # The llm parameters will be available in the LLM class
             llm_parameters["provider"] = result["llm_provider"]
             llm_parameters["model_name"] = result["llm_model"]
             result["class"] = LlmProvider(llm_parameters)
@@ -1296,8 +1365,10 @@ class StreamlitLib:
         with st.spinner("Procesing text generation..."):
             # Generating answer
             llm_text_model = llm_text_model_elements['class']
-            prompt = "{question}"
-
+            if "system_prompt" in other_data:
+                prompt = other_data["system_prompt"]
+            else:
+                prompt = "{question}"
             response = llm_text_model.query(
                 prompt, question,
                 (self.get_par_value("REFINE_LLM_PROMPT_TEXT") if

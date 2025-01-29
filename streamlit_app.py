@@ -134,6 +134,12 @@ def process_ideation_form(form: dict, form_config: dict):
         cgsl.show_form_error("Missing template")
         return
 
+    system_prompt_template = features_data.get(selected_feature) \
+        .get("system_prompt")
+    if not system_prompt_template:
+        cgsl.show_form_error("Missing system prompt")
+        return
+
     # Read the template file
     template_path = f"./config/{template}"
     if not os.path.exists(template_path):
@@ -141,6 +147,21 @@ def process_ideation_form(form: dict, form_config: dict):
         return
     with open(template_path, "r") as f:
         question = f.read()
+
+    # Read the system prompt file
+    system_prompt_path = f"./config/{system_prompt_template}"
+    if not os.path.exists(system_prompt_path):
+        cgsl.show_form_error(
+            f"Missing system prompt file: {system_prompt_path}")
+        return
+    with open(system_prompt_path, "r") as f:
+        system_prompt = f.read()
+
+    # Default values
+    if "timeframe" not in form:
+        form["timeframe"] = cgsl.get_par_value("IDEATION_DEFAULT_TIMEFRAME")
+    if "quantity" not in form:
+        form["quantity"] = cgsl.get_par_value("IDEATION_DEFAULT_QTY")
 
     # Replace the placeholders with the user input
     final_form = {}
@@ -162,6 +183,7 @@ def process_ideation_form(form: dict, form_config: dict):
     other_data = {
         "subtype": selected_feature,
         "template": template,
+        "system_prompt": system_prompt,
         "form_name": form_name,
         "form_data": final_form,
         "form_session_state_key": form_session_state_key,
@@ -192,6 +214,12 @@ def process_ideation_form(form: dict, form_config: dict):
             "No response. Check the Detailed Response section."),
         other_data=other_data,
     )
+
+    # Restore the original question if App Ideation from prompt was used
+    # original_question = other_data.get("form_data", {}).get("question")
+    # if original_question:
+    #     st.session_state.question = original_question
+
     st.rerun()
 
 
@@ -615,12 +643,12 @@ def page_1():
         add_buttons_for_main_tab()
 
     with tab2:
-        # Form
+        # Idea from Form
         form = show_ideation_form(tab2)
         if form:
             process_ideation_form(form, get_ideation_form_config())
 
-        # Idea from prompt
+        # Idea from Prompt
         st.session_state.forms_config["ideation_from_prompt"] = \
             get_ideation_from_prompt_config()
         show_ideation_from_prompt(tab2, "show_form")

@@ -1,4 +1,4 @@
-Improve the [USER PROMPT] to make it clearer, more effective, and aligned with the task objectives and expectations.
+Improve the user prompt to make it clearer, more effective, and aligned with the task objectives and expectations.
 
 # Steps
 
@@ -28,6 +28,3 @@ An enhanced version of the prompt with:
 - When enhancing the prompt, ensure reasoning precedes any conclusion or answer.
 - Always define how the output should be structured (e.g., format length or elements).
 - Give me just the enhanced version of the prompt, no other text.
-
-[USER PROMPT]:
-{question}

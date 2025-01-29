@@ -1,5 +1,0 @@
-# Output Format
-
-Provide the output in JSON format with keys as follows:
-- `"s1"`, `"s2"`, `"s3"`, etc., with each suggestion as the value.
-- Generate only {qty} suggestions.

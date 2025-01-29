@@ -22,7 +22,8 @@ def get_features_data():
     """
     return {
         "generate_app_ideas": {
-            "template": "generate_app_ideas_prompt.txt",
+            "system_prompt": "generate_app_ideas_system_prompt.txt",
+            "template": "generate_app_ideas_user_prompt.txt",
             "mandatory_fields": [
                 # "title",
                 # "subtitle",
@@ -32,7 +33,8 @@ def get_features_data():
             ],
         },
         "generate_app_names": {
-            "template": "generate_app_names_prompt.txt",
+            "system_prompt": "generate_app_names_system_prompt.txt",
+            "template": "generate_app_names_user_prompt.txt",
             "mandatory_fields": [
                 # "title",
                 # "subtitle",
@@ -41,7 +43,8 @@ def get_features_data():
             ],
         },
         "generate_app_structure": {
-            "template": "generate_app_structure_prompt.txt",
+            "system_prompt": "generate_app_structure_system_prompt.txt",
+            "template": "generate_app_structure_user_prompt.txt",
             "mandatory_fields": [
                 "title",
                 # "subtitle",
@@ -50,7 +53,8 @@ def get_features_data():
             ],
         },
         "generate_presentation": {
-            "template": "generate_app_presentation_prompt.txt",
+            "system_prompt": "generate_app_presentation_system_prompt.txt",
+            "template": "generate_app_presentation_user_prompt.txt",
             "mandatory_fields": [
                 "title",
                 "subtitle",
@@ -77,25 +81,34 @@ def get_features_data_from_prompt():
     """
     return {
         "generate_app_ideas_from_prompt": {
-            "template": "generate_app_ideas_from_question_prompt.txt",
+            "system_prompt":
+                "generate_app_ideas_system_prompt.txt",
+            "template": "generate_app_ideas_from_question_user_prompt.txt",
             "mandatory_fields": [
                 "question",
             ],
         },
         "generate_app_names_from_prompt": {
-            "template": "generate_app_names_from_question_prompt.txt",
+            "system_prompt":
+                "generate_app_names_system_prompt.txt",
+            "template": "generate_app_names_from_question_user_prompt.txt",
             "mandatory_fields": [
                 "question",
             ],
         },
         "generate_app_structure_from_prompt": {
-            "template": "generate_app_structure_from_question_prompt.txt",
+            "system_prompt":
+                "generate_app_structure_system_prompt.txt",
+            "template": "generate_app_structure_from_question_user_prompt.txt",
             "mandatory_fields": [
                 "question",
             ],
         },
         "generate_presentation_from_prompt": {
-            "template": "generate_app_presentation_from_question_prompt.txt",
+            "system_prompt":
+                "generate_app_presentation_system_prompt.txt",
+            "template":
+                "generate_app_presentation_from_question_user_prompt.txt",
             "mandatory_fields": [
                 "question",
             ],

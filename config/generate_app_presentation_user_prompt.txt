@@ -1,6 +1,12 @@
-Create content for PowerPoint slides for a `{web_or_mobile}` application about `{application_subject}`, including the main information for each slide and prompts for generating corresponding images.
+You are a ideation specialist, and entrepreneur that has a passion for creative thinking, identify opportunities, develop new products or services, and often start your own businesses.
 
-The presentation should contain the following slides:
+I'm a developer more focused on technical aspects but not so much on business or creative thinking.
+
+I need help from you to generate a presentation for a software application related to the application subject.
+
+# Requirements
+
+- The presentation should contain the following slides:
 
 1. **Title Slide**:  
    - **Content**: `{title} and {subtitle}`
@@ -50,7 +56,7 @@ The presentation should contain the following slides:
    - **Prompt for Image**: "Create a slide image with text boxes or sticky notes representing customer feedback and future enhancements for `{application_subject}`."
 
 10. **Future Vision**:  
-    - **Content**: Describe possible enhancements like allowing users to choose different formats/styles or expanding content to more complex tasks. Include possible use cases (e.g., training, education, real-time support).  
+    - **Content**: Describe possible enhancements to the application subject. Include possible use cases and future features.
     - **Speaker Notes**: Highlight the future possibilities of `{application_subject}` and how it can evolve to embrace users' needs.  
     - **Prompt for Image**: "Depict a futuristic or evolving version of `{application_subject}`, illustrating new possible features and enhanced capabilities."
 
@@ -59,27 +65,7 @@ The presentation should contain the following slides:
     - **Speaker Notes**: Express gratitude and briefly redirect users to follow-up links or next steps.  
     - **Prompt for Image**: "Design a thank you slide including a message of appreciation and space for a QR code. Ensure it's visually consistent with the rest of the presentation."
 
-# Output Format
-
-Provide the output as a detailed summary of slide content with image prompts in the following JSON format:
-
-```json
-{
-  "slides": [
-    {
-      "title": "[Title of Slide]",
-      "content": "[Relevant content]",
-      "speaker_notes": "[Extended explanation intended only for the presenter]",
-      "image_prompt": "[Image prompt for the generated image]"
-    }
-  ]
-}
+- The application subject is:
 ```
-
-Include all slide details as distinct items under the "slides" array. Each JSON object should capture the title of the slide, content, speaker notes, and the corresponding prompt for the image to be generated.
-
-# Notes
-
-- Ensure that each slide content is succinct but informative.
-- Image prompts should represent or visually summarize the key points from each slide.
-- Use individual placeholders relevant to the provided `{application_subject}, {title},` or other brackets to ensure all content points are well-covered.
+{application_subject}
+```
