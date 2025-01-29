@@ -20,6 +20,7 @@
         "s4": "Give me the ReactJs code for a AI Assistant, using Shadcn/UI"
     },
     "DYNAMIC_SUGGESTIONS": false,
+    "AGENT_SYSTEM_PROMPT": "[agent_system_prompt.txt]",
     "SUGGESTIONS_PROMPT_SYSTEM": "[suggestions_text_system_prompt.txt]",
     "SUGGESTIONS_PROMPT_TEXT": "[suggestions_text_user_prompt.txt]",
     "SUGGESTIONS_PROMPT_SUFFIX": "[suggestions_suffix_user_prompt.txt]",
@@ -39,6 +40,10 @@
     "REFINE_LLM_PROMPT_SYSTEM": "[refine_llm_system_prompt.txt]",
     "REFINE_LLM_PROMPT_TEXT": "[refine_llm_user_prompt.txt]",
     "LLM_PROVIDERS": {
+        "openrouter": {
+            "requirements": ["OPENROUTER_API_KEY"],
+            "active": true
+        },
         "together_ai": {
             "requirements": ["TOGETHER_AI_API_KEY"],
             "active": true
@@ -114,6 +119,13 @@
         }
     },
     "LLM_AVAILABLE_MODELS": {
+        "openrouter": [
+            "google/gemini-2.0-flash-exp:free",
+            "google/gemini-2.0-flash-thinking-exp:free",
+            "deepseek/deepseek-r1:free",
+            "meta-llama/llama-3.2-3b-instruct:free",
+            "qwen/qwen-2-7b-instruct:free"
+        ],
         "openai": [
             "gpt-4o",
             "gpt-4o-mini",

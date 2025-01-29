@@ -17,6 +17,14 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Breaks
 
 
+## Unreleased
+## 0.4.0 (2025-01-29)
+---
+
+### New
+Add the oTTomator Live Studio compatible GSAM Agent (as part of the oTTomator hackathon) [GS-166].
+
+
 ## 0.3.0 (2025-01-25)
 ---
 

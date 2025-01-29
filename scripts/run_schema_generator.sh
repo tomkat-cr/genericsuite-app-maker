@@ -89,7 +89,7 @@ echo ""
 echo "Executing: python schema_generator.py --user_input \"${USER_INPUT}\" --provider ${CODEGEN_AI_PROVIDER} ${PARAMETERS}"
 pwd
 echo ""
-python codegen_schema_generator.py --user_input "${USER_INPUT}" --provider ${CODEGEN_AI_PROVIDER} ${PARAMETERS}
+python lib/codegen_schema_generator.py --user_input "${USER_INPUT}" --provider ${CODEGEN_AI_PROVIDER} ${PARAMETERS}
 
 deactivate
 if [ "${CODEGEN_KEEP_VENV}" != "1" ]; then

@@ -8,6 +8,9 @@ AI tool to enhance the software development ideation and AI models, providers an
 
 [GSAM](https://gsam-app.streamlit.app) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 
+## The GSAM Python FastAPI agent
+
+The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the GSAM implementation compatible with the OTTomator Live Agent Studio. For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
 
 ## Key Features
 
@@ -268,3 +271,9 @@ This project is licensed under the terms of the MIT license. See the [LICENSE](L
 * [Streamlit](https://streamlit.io/) for providing a user-friendly interface for interacting with the application.
 * Open-source community for inspiring and supporting collaborative innovation.
 * Users and contributors for their feedback and support.
+
+## Credits
+
+This project is developed and maintained by [Carlos J. Ramirez](https://www.linkedin.com/in/carlosjramirez/). For more information or to contribute to the project, visit [GenericSuite App Maker on GitHub](https://github.com/tomkat-cr/genericsuite-app-maker).
+
+Happy Coding!
