@@ -7,7 +7,7 @@ from lib.codegen_db_mongodb import MongoDBDatabase
 # from lib.codegen_utilities import log_debug
 
 
-DEBUG = True
+DEBUG = False
 
 
 class CodegenDatabase(DatabaseAbstract):

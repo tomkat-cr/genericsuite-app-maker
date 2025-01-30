@@ -13,7 +13,7 @@ from lib.codegen_utilities import (
 from lib.codegen_ai_abstracts import LlmProviderAbstract
 
 
-DEBUG = True
+DEBUG = False
 
 
 class OllamaLlm(LlmProviderAbstract):

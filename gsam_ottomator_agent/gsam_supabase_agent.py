@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from gsam_ottomator_agent.gsam_agent_lib import run_agent
 
-DEBUG = True
+DEBUG = False
 
 # Load environment variables
 load_dotenv()

@@ -23,7 +23,7 @@ from src.codegen_buttons import (
     add_buttons_for_code_gen_tab,
 )
 
-DEBUG = True
+DEBUG = False
 
 app_config = get_app_config()
 cgsl = StreamlitLib(app_config)

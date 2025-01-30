@@ -16,7 +16,7 @@ from lib.codegen_ai_abstracts import (
 )
 
 
-DEBUG = True
+DEBUG = False
 
 
 def get_openai_api_response(model_params: dict, naming: dict = None) -> dict:

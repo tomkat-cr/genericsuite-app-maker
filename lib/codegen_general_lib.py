@@ -24,7 +24,7 @@ from lib.codegen_ai_utilities import (
 from lib.codegen_powerpoint import PowerPointGenerator
 
 
-DEBUG = True
+DEBUG = False
 
 
 class GeneralLib:

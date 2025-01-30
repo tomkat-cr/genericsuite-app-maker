@@ -16,7 +16,7 @@ from lib.codegen_utilities import (
     log_debug,
 )
 
-DEBUG = True
+DEBUG = False
 
 # DEFAULT_POWERPOINT_TEMPLATE = "default_powerpoint_template.pptx"
 DEFAULT_POWERPOINT_TEMPLATE = ""
