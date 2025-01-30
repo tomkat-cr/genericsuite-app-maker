@@ -2,15 +2,15 @@
 
 AI tool to enhance the software development ideation and AI models, providers and features selection and test.
 
-![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png)
+<!-- ![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png) -->
 
 ## Introduction
 
 [GSAM](https://gsam-app.streamlit.app) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 
-## The GSAM Python FastAPI agent
+## GSAM Python FastAPI agent
 
-The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio(https://studio.ottomator.ai)]. For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
+The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio](https://studio.ottomator.ai). For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
 
 ## Key Features
 
