@@ -48,6 +48,11 @@ install_requirements() {
     if [ -f requirements.txt ]; then
         pip install -r requirements.txt
     else
+        pip install --upgrade pip;
+        # Dependencies needed for the Agent:
+        # fastapi, uvicorn, pydantic, pydantic, pydantic, supabase, asyncpg, nest_asyncio, python-dotenv, llama-index
+        # Dependencies needed for the UI:
+        # streamlit, requests, python-dotenv, pymongo, python-pptx, openai, ollama, groq, together, llama-index
         if ! pip install \
             fastapi \
             uvicorn \
@@ -55,18 +60,27 @@ install_requirements() {
             pydantic-ai \
             pydantic-ai[logfire] \
             supabase \
-            python-dotenv \
             asyncpg \
-            requests \
-            python-pptx \
-            llama-index \
             nest_asyncio \
-            openai ollama groq together
+            streamlit \
+            requests \
+            python-dotenv \
+            pymongo \
+            python-pptx \
+            openai \
+            ollama \
+            groq \
+            together \
+            llama-index;
         then
             echo "Error installing requirements"
             exit 1
         fi
-        if ! pip freeze > requirements.txt
+        REQUIREMENTS_DIR="."
+        if [ ! -f "gsam_ottomator_agent_app.py" ]; then
+            REQUIREMENTS_DIR=".."
+        fi
+        if ! pip freeze > "${REQUIREMENTS_DIR}/requirements.txt"
         then
             echo "Error saving requirements"
             exit 1

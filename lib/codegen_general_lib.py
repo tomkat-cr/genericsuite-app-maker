@@ -477,6 +477,8 @@ class GeneralLib:
                     break
             if model_to_add:
                 result.append(model_to_add)
+        log_debug(f"get_available_ai_providers | result: {result}",
+                  debug=DEBUG)
         return result
 
     def get_llm_provider(
@@ -710,6 +712,7 @@ class GeneralLib:
         question: str = None,
         settings: dict = None
     ):
+        result = get_default_resultset()
         if not settings:
             settings = {}
         if not question:
@@ -754,17 +757,18 @@ class GeneralLib:
                 self.get_prompt_enhancement_flag() else None)
         )
         if response['error']:
-            other_data["error_message"] = (
-                f"ERROR E-IG-100: {response['error_message']}")
+            result["error"] = True
+            result["error_message"] = (
+                f"ERROR GL-IG-100: {response['error_message']}")
 
-        result = get_default_resultset()
-        result["resultset"] = {
+        result.update({
             "type": "image",
             "question": question,
             "refined_prompt": response.get('refined_prompt'),
             "answer": response.get('response'),
             "other_data": other_data,
-        }
+        })
+        log_debug(f"image_generation | result: {result}", debug=DEBUG)
         return result
 
     def video_generation(
@@ -773,6 +777,7 @@ class GeneralLib:
         previous_response: dict = None,
         settings: dict = None
     ):
+        result = get_default_resultset()
         if not settings:
             settings = {}
         llm_provider = self.get_llm_provider(
@@ -840,7 +845,6 @@ class GeneralLib:
                 llm_text_model_elements['llm_provider'],
             "ai_text_model_model": llm_text_model_elements['llm_model'],
         }
-        result = get_default_resultset()
         result["resultset"] = {
             "type": "video",
             "question": question,
@@ -852,12 +856,14 @@ class GeneralLib:
 
         response = ttv_model.video_gen_followup(ttv_response)
         if response['error']:
-            other_data["error_message"] = (
+            result["error"] = True
+            result["error_message"] = (
                 f"ERROR GL-VG-E030: {response['error_message']}")
         elif response.get("video_url"):
             video_url = response["video_url"]
         else:
-            other_data["error_message"] = (
+            result["error"] = True
+            result["error_message"] = (
                 "ERROR GL-VG-E040: Video generation failed."
                 " No video URL. Try again later by clicking"
                 " the corresponding previous answer.")
@@ -865,21 +871,22 @@ class GeneralLib:
                 other_data["ttv_followup_response"] = \
                     response["ttv_followup_response"]
 
-        if previous_response and other_data.get("error_message"):
+        if previous_response and result.get("error_message"):
             return error_resultset(
-                error_message=other_data["error_message"],
+                error_message=result["error_message"],
                 message_code='GL-VG-E050',
             )
 
         # Save the conversation with the video generation result
-        result["resultset"] = {
+        result.update({
             "type": "video",
             "question": question,
             "refined_prompt": ttv_response.get('refined_prompt'),
             "answer": video_url,
             "other_data": other_data,
             "id": video_id,
-        }
+        })
+        log_debug(f"video_generation | result: {result}", debug=DEBUG)
         return result
 
     # General functions

@@ -171,7 +171,10 @@ class HuggingFaceImageGen(HuggingFaceLlm):
         if pam_response['error']:
             return pam_response
 
-        img_model_name = os.environ.get("HUGGINGFACE_IMAGE_MODEL_NAME")
+        if self.params.get("model_name"):
+            img_model_name = self.params.get("model_name")
+        else:
+            img_model_name = os.environ.get("HUGGINGFACE_IMAGE_MODEL_NAME")
         if not img_model_name:
             return error_resultset(
                 error_message='No model name supplied',

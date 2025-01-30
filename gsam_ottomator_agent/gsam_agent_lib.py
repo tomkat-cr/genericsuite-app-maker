@@ -3,10 +3,11 @@ GSAM Agent library
 """
 from __future__ import annotations as _annotations
 
+
+from typing import List, Any
+import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
-import logfire
-import os
 
 from pydantic_ai import (
     Agent,
@@ -19,11 +20,9 @@ from pydantic_ai.messages import (
     UserPromptPart,
     TextPart
 )
-
+import logfire
+from fastapi import HTTPException
 from supabase import Client
-
-from typing import List
-
 from openai import AsyncOpenAI
 
 from lib.codegen_utilities import log_debug
@@ -41,6 +40,8 @@ import nest_asyncio
 
 
 DEBUG = False
+MOCK_IMAGES = False
+MOCK_VIDEOS = True
 
 nest_asyncio.apply()
 
@@ -51,9 +52,29 @@ class PydanticAIDeps:
     openai_client: AsyncOpenAI
 
 
+class AppContext:
+    def __init__(self, params: dict = None):
+        self.params = params or {}
+
+    def set_param(self, param_name: str, param_value: Any):
+        self.params[param_name] = param_value
+
+    def get_param(self, param_name: str) -> Any:
+        return self.params.get(param_name)
+
+    def set_params(self, params: dict):
+        self.params = params
+
+    def get_params(self) -> dict:
+        return self.params
+
+
 load_dotenv()
+
 app_config = get_app_config()
 cgsl = GeneralLib(app_config)
+
+app_context = AppContext({})
 
 model_params = {}
 default_llm_provider = cgsl.get_par_value("DEFAULT_LLM_PROVIDER", "openai")
@@ -85,7 +106,15 @@ pydantic_ai_agent = Agent(
 )
 
 
-# Agent entry point
+# Agent utilities
+
+
+def headers_to_dict(headers: list[tuple(bytes, bytes)]
+                    ) -> dict:
+    """
+    Convert a FastAPI headers object to a dictionary.
+    """
+    return {k.decode("latin-1"): v.decode("latin-1") for k, v in headers}
 
 
 def convert_messages(conversation_history: list) -> list:
@@ -105,11 +134,19 @@ def convert_messages(conversation_history: list) -> list:
     return messages
 
 
-def run_agent(user_input: str, messages: list):
+# Agent entry point
+
+
+def run_agent(user_input: str, messages: list, http_request: dict):
     """
     Run the agent with streaming text for the user_input prompt,
     while maintaining the entire conversation in `st.session_state.messages`.
     """
+    # Set app context
+    app_context.set_params({
+        "http_request": http_request
+    })
+
     # Prepare dependencies
     deps = PydanticAIDeps(
         supabase=supabase,
@@ -136,12 +173,34 @@ def run_agent(user_input: str, messages: list):
 async def generate_json_and_code(
     ctx: RunContext[PydanticAIDeps], user_query: str
 ) -> str:
+    """
+    Generate a JSON (compatible with GenericSuite) and AI Tools code
+    (compatible with LangChain) based on the provided text.
+
+    Args:
+        ctx: The context including the Supabase client and OpenAI client
+        user_query: The text to base the JSON and code on
+
+    Returns:
+        A JSON and code result
+    """
     codegen_lib = CodeGenLib(app_config)
     result = codegen_lib.process_json_and_code_generation(user_query)
     return result
 
 
 def get_ideation_result(user_query: str, button_index: int):
+    """
+    Get the result of an ideation request based on the provided
+    text and button index.
+
+    Args:
+        user_query: The text to base the ideation request on
+        button_index: The index of the button to base the ideation request on
+
+    Returns:
+        The result of the ideation request
+    """
     form_config = get_ideation_from_prompt_config()
     buttons_config = get_buttons_config_for_prompt()
     buttons_submitted = [buttons_config[button_index]['key']]
@@ -161,6 +220,16 @@ def get_ideation_result(user_query: str, button_index: int):
 async def generate_app_ideas(
     ctx: RunContext[PydanticAIDeps], user_query: str
 ) -> str:
+    """
+    Generate an app ideas based on the provided text.
+
+    Args:
+        ctx: The context including the Supabase client and OpenAI client
+        user_query: The text to base the app ideas on
+
+    Returns:
+        The app ideas
+    """
     return get_ideation_result(user_query, 0)
 
 
@@ -168,6 +237,16 @@ async def generate_app_ideas(
 async def generate_app_name(
     ctx: RunContext[PydanticAIDeps], user_query: str
 ) -> str:
+    """
+    Generate an app name suggestions based on the provided text.
+
+    Args:
+        ctx: The context including the Supabase client and OpenAI client
+        user_query: The text to base the app name on
+
+    Returns:
+        The name suggestions for the app
+    """
     return get_ideation_result(user_query, 1)
 
 
@@ -175,6 +254,17 @@ async def generate_app_name(
 async def generate_app_description(
     ctx: RunContext[PydanticAIDeps], user_query: str
 ) -> str:
+    """
+    Generate an app description and database schema based on the
+    provided text.
+
+    Args:
+        ctx: The context including the Supabase client and OpenAI client
+        user_query: The text to base the app description on
+
+    Returns:
+        A description and database schema of the app
+    """
     return get_ideation_result(user_query, 2)
 
 
@@ -182,7 +272,96 @@ async def generate_app_description(
 async def generate_ppt_slides(
     ctx: RunContext[PydanticAIDeps], user_query: str
 ) -> str:
+    """
+    Generate PowerPoint slides based on the provided text.
+
+    Args:
+        ctx: The context including the Supabase client and OpenAI client
+        user_query: The text to base the slides on
+
+    Returns:
+        A URL to the generated PowerPoint presentation
+    """
     return get_ideation_result(user_query, 3)
+
+
+@pydantic_ai_agent.tool
+async def generate_images(
+    ctx: RunContext[PydanticAIDeps],
+    user_query: str
+) -> str:
+    """
+    Generate images based on the provided text.
+
+    Args:
+        ctx: The context including the Supabase client and OpenAI client
+        user_query: The text to base the images on
+
+    Returns:
+        A URL to the generated images
+    """
+    # Get the scheme (http/https) and host name from the request
+    request = app_context.get_param("http_request")
+    headers = headers_to_dict(request.get("headers"))
+    log_debug(f"generate_images | request: {request}", debug=DEBUG)
+    # host_name = f'{request.get("server")[0]}:{request.get("server")[1]}'
+    host_name = headers.get("host")
+    log_debug(f"generate_images | host_name: {host_name}", debug=DEBUG)
+    # Get the http/https from the request
+    scheme = request.get("scheme")
+    log_debug(f"generate_images | scheme: {scheme}", debug=DEBUG)
+    # Generate the image from the user input
+    if MOCK_IMAGES:
+        img_gen_result = {
+            "error": False,
+            "answer": "./images/" +
+                      "hf_img_74d9a262-93cf-47c2-b745-9cd22faa4e29.jpg",
+        }
+    else:
+        img_gen_result = cgsl.image_generation(user_query)
+    if img_gen_result.get("error"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{img_gen_result.get('error_message')} [GSAL-GI-E010]"
+        )
+    # Return the image URL
+    image_name = img_gen_result.get("answer")
+    if image_name.startswith("./images/"):
+        image_name = image_name.replace(
+            "./images/",
+            f"{scheme}://{host_name}/api/image/")
+    log_debug(f"generate_images | Image name: {image_name}", debug=DEBUG)
+    return image_name
+
+
+@pydantic_ai_agent.tool
+async def generate_video(
+    ctx: RunContext[PydanticAIDeps], user_query: str
+) -> str:
+    """
+    Generate a video based on the provided text.
+
+    Args:
+        ctx: The context including the Supabase client and OpenAI client
+        user_query: The text to base the video on
+
+    Returns:
+        A URL to the generated video
+    """
+    if MOCK_VIDEOS:
+        video_gen_result = {
+            "error": False,
+            "answer": "https://apiplatform-rhymes-prod-va.s3.amazonaws.com/" +
+                      "20241103031651.mp4",
+        }
+    else:
+        video_gen_result = cgsl.video_generation(user_query)
+    if video_gen_result.get("error"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{video_gen_result.get('error_message')} [GSAL-GV-E010]"
+        )
+    return video_gen_result.get("answer")
 
 
 # Documentation and embedding tools
