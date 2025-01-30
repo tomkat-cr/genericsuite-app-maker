@@ -40,7 +40,7 @@ from lib.codegen_app_ideation_lib import (
 import nest_asyncio
 
 
-DEBUG = True
+DEBUG = False
 
 nest_asyncio.apply()
 

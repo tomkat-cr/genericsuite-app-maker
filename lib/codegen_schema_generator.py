@@ -24,7 +24,7 @@ from lib.codegen_utilities import get_app_config
 from lib.codegen_llamaindex_abstraction import LlamaIndexCustomLLM
 # from lib.codegen_utilities import log_debug
 
-DEBUG = True
+DEBUG = False
 USE_PPRINT = False
 
 DEFAULT_AI_PROVIDER = [

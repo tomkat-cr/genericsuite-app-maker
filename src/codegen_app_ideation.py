@@ -7,7 +7,7 @@ from lib.codegen_app_ideation_lib import (
     get_ideation_from_prompt_config,
 )
 
-DEBUG = True
+DEBUG = False
 
 app_config = get_app_config()
 cgsl = StreamlitLib(app_config)

@@ -15,7 +15,7 @@ from lib.codegen_utilities import (
 from lib.codegen_ai_provider_openai import get_openai_api_response
 from lib.codegen_ai_abstracts import LlmProviderAbstract
 
-DEBUG = True
+DEBUG = False
 
 RHYMES_SUCCESS_RESPONSES = ["success", "Success", '成功']
 

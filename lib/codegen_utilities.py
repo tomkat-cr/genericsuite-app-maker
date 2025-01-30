@@ -10,7 +10,7 @@ import uuid
 import requests
 
 
-DEBUG = True
+DEBUG = False
 
 
 def log_debug(message: Any, debug: bool = DEBUG) -> None:

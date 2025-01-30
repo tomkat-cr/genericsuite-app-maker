@@ -10,7 +10,7 @@ from lib.codegen_utilities import (
 from lib.codegen_general_lib import GeneralLib
 from lib.codegen_schema_generator import JsonGenerator
 
-DEBUG = True
+DEBUG = False
 
 
 class CodeGenLib(GeneralLib):

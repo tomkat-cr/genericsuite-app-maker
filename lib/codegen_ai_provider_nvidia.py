@@ -11,7 +11,7 @@ from lib.codegen_ai_abstracts import LlmProviderAbstract
 from lib.codegen_ai_provider_openai import get_openai_api_response
 
 
-DEBUG = True
+DEBUG = False
 
 
 class NvidiaLlm(LlmProviderAbstract):

@@ -6,7 +6,7 @@ from lib.codegen_utilities import log_debug
 from lib.codegen_ai_abstracts_constants import DEFAULT_PROMPT_ENHANCEMENT_TEXT
 
 
-DEBUG = True
+DEBUG = False
 
 
 def prepare_model_params(model_params: dict, naming: dict = None) -> dict:

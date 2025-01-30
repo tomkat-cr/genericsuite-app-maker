@@ -7,7 +7,7 @@ import streamlit as st
 from lib.codegen_streamlit_lib import StreamlitLib
 from lib.codegen_utilities import get_app_config
 
-DEBUG = True
+DEBUG = False
 
 app_config = get_app_config()
 cgsl = StreamlitLib(app_config)

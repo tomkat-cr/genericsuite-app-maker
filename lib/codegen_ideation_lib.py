@@ -9,7 +9,7 @@ from lib.codegen_utilities import (
     error_resultset)
 from lib.codegen_general_lib import GeneralLib
 
-DEBUG = True
+DEBUG = False
 
 
 class IdeationLib(GeneralLib):

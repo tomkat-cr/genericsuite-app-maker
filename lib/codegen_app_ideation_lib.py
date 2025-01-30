@@ -3,7 +3,7 @@ App ideation parameters library
 """
 
 
-DEBUG = True
+DEBUG = False
 
 # app_config = get_app_config()
 # cgsl = StreamlitLib(app_config)

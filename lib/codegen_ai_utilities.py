@@ -9,7 +9,7 @@ from lib.codegen_ai_provider_openai import (
 from lib.codegen_utilities import log_debug
 
 
-DEBUG = True
+DEBUG = False
 
 
 class LlmProvider(LlmProviderAbstract):
