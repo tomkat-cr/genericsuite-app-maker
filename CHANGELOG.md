@@ -17,6 +17,16 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Breaks
 
 
+## Unreleased
+---
+
+### New
+Add image and video generation capabilities to the oTTomator Live Studio compatible GSAM Agent [GS-166].
+
+### Fixes
+Fix the runtime error in the streamlit UI in production [GS-55].
+
+
 ## 0.4.0 (2025-01-29)
 ---
 

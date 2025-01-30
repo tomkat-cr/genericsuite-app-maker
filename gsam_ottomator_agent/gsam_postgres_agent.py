@@ -128,7 +128,8 @@ async def store_message(session_id: str, message_type: str, content: str,
 
 async def gsam_postgres_agent(
     request: AgentRequest,
-    authenticated: bool = Depends(verify_token)
+    authenticated: bool = Depends(verify_token),
+    headers: dict = None
 ):
     try:
         # Fetch conversation history from the DB
@@ -164,7 +165,7 @@ async def gsam_postgres_agent(
             - Use request.session_id if you need to insert more messages into
               the DB in the agent logic.
         """
-        agent_response = run_agent(request.query, messages)
+        agent_response = run_agent(request.query, messages, headers)
 
         # Store agent's response
         await store_message(

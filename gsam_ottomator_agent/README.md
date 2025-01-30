@@ -4,7 +4,7 @@ Author: [Carlos J. Ramirez](https://www.carlosjramirez.com)
 
 Based on the [oTtomator Python agent](https://github.com/coleam00/ottomator-agents/tree/main/~sample-python-agent~) code from: [Cole Medin](https://www.youtube.com/@ColeMedin)
 
-The [GSAM](../README.md) Python FastAPI agent, is a tool to help on the software development process for any Application. It allows to generate application ideas, app description, database estructures, and presentation content from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library. It's compatible with the OTTomator Live Agent Studio.
+The [GSAM](../README.md) Python FastAPI agent, is a tool to help on the software development process for any Application. It allows to generate application ideas, app description, database estructures, and presentation content from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library. It's compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio](https://studio.ottomator.ai).
 
 ## Overview
 
@@ -139,6 +139,18 @@ messages (
    ```env
    OPENROUTER_API_KEY=your-api-key-here
    OPENROUTER_MODEL_NAME=your-model-name-here
+   ```
+
+   #### Image generation configurations
+   ```env
+   # to use HuggingFace and Flux
+   HUGGINGFACE_API_KEY=your-api-key-here
+   ```
+
+   #### Video generation configurations
+   ```env
+   # to use Rhymes Allegro
+   RHYMES_ALLEGRO_API_KEY=your-api-key-here
    ```
 
 3. **Create Database Tables**

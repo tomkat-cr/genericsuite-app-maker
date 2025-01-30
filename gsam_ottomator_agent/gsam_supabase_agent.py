@@ -41,6 +41,7 @@ def init_fastapi_app():
 
 
 class AgentRequest(BaseModel):
+    """Request model for the agent."""
     query: str
     user_id: str
     request_id: str
@@ -111,7 +112,8 @@ async def store_message(session_id: str, message_type: str, content: str,
 
 async def gsam_supabase_agent(
     request: AgentRequest,
-    authenticated: bool = Depends(verify_token)
+    authenticated: bool = Depends(verify_token),
+    http_request: dict = None,
 ):
     try:
         # Fetch conversation history from the DB
@@ -149,7 +151,7 @@ async def gsam_supabase_agent(
             - Use request.session_id if you need to insert more messages into
               the DB in the agent logic.
         """
-        agent_response = run_agent(request.query, messages)
+        agent_response = run_agent(request.query, messages, http_request)
 
         # Store agent's response
         await store_message(
