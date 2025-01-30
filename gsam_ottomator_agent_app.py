@@ -65,26 +65,24 @@ async def gsam_supabase_agent_endpoint(
             status_code=400,
             detail="Invalid agent database type [GSAE-E010]"
         )
-    _ = DEBUG and log_debug(
-        f"gsam_supabase_agent_endpoint | headers: {dict(request)}",
-        debug=DEBUG)
-    result = await gsam_supabase_agent(
-        agent_request, authenticated, dict(request))
+    result = await gsam_supabase_agent(agent_request, authenticated,
+                                       dict(request))
     return result
 
 
 @app.post("/api/gsam-postgres-agent", response_model=PostgresAgentResponse)
 async def gsam_postgres_agent_endpoint(
-    request: PostgresAgentRequest,
+    agent_request: PostgresAgentRequest,
     authenticated: bool = Depends(verify_token_postgres),
-    headers: Annotated[CommonHeaders, Header()] | None = None
+    request: Request = None
 ):
     if agent_db_type != "postgres":
         raise HTTPException(
             status_code=400,
             detail="Invalid agent database type [GPAE-E010]"
         )
-    result = await gsam_postgres_agent(request, authenticated, dict(headers))
+    result = await gsam_postgres_agent(agent_request, authenticated,
+                                       dict(request))
     return result
 
 
