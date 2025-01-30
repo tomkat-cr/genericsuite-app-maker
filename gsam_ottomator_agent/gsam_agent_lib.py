@@ -13,6 +13,13 @@ from pydantic_ai import (
     RunContext
 )
 from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.messages import (
+    ModelRequest,
+    ModelResponse,
+    UserPromptPart,
+    TextPart
+)
+
 from supabase import Client
 
 from typing import List
@@ -81,6 +88,23 @@ pydantic_ai_agent = Agent(
 # Agent entry point
 
 
+def convert_messages(conversation_history: list) -> list:
+    """
+    Convert a list of messages to a list of dictionaries.
+    """
+    # Convert conversation history to format expected by agent
+    log_debug(f">>> conversation_history:\n{conversation_history}", DEBUG)
+    messages = []
+    for msg in conversation_history:
+        msg_type = msg["role"]
+        msg_content = msg["content"]
+        result = ModelRequest(parts=[UserPromptPart(content=msg_content)]) \
+            if msg_type == "human" else \
+            ModelResponse(parts=[TextPart(content=msg_content)])
+        messages.append(result)
+    return messages
+
+
 def run_agent(user_input: str, messages: list):
     """
     Run the agent with streaming text for the user_input prompt,
@@ -91,12 +115,15 @@ def run_agent(user_input: str, messages: list):
         supabase=supabase,
         openai_client=openai_client
     )
+
+    # Prepare messages
+    messages = convert_messages(messages)
+
     # Run the agent in a stream
-    # result = await pydantic_ai_agent.run(
     result = pydantic_ai_agent.run_sync(
         user_input,
         deps=deps,
-        # message_history=messages[:-1],  # pass entire conversation so far
+        message_history=messages,
     )
     log_debug(f">>> run_agent: {result.data}")
     return result.data

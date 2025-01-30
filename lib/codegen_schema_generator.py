@@ -4,7 +4,7 @@ codegen_schema_generator.py
 """
 # from typing import Any
 import os
-import sys
+# import sys
 import time
 from datetime import datetime
 
@@ -126,10 +126,10 @@ class JsonGenerator:
     """
     Class to generate the .json files for the frontend and backend
     """
-    def __init__(self, params: dict = None):
+    def __init__(self, params: dict):
         if not params:
             params = {}
-        self.params = params or {}
+        self.params = dict(params)
         self.params.update(get_app_config())
         self.args = self.read_arguments(params)
         self.embeddings_sources_dir = self.params.get(
@@ -146,7 +146,8 @@ class JsonGenerator:
         """
         Decide where to read arguments from
         """
-        if len(sys.argv) > 1:
+        # if len(sys.argv) > 1:
+        if self.params.get("cli"):
             # If it's called from the command line, we need to read the
             # arguments from the command line
             args = self.read_arguments_from_cli()
@@ -607,7 +608,9 @@ class JsonGenerator:
 if __name__ == "__main__":
 
     json_generator = JsonGenerator()
-    final_result = json_generator.generate_json()
+    final_result = json_generator.generate_json({
+        "cli": True
+    })
 
     print("")
     print("Final result:")
