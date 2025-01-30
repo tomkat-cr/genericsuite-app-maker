@@ -1,13 +1,23 @@
 # GSAM Python FastAPI Agent
 
 Author: [Carlos J. Ramirez](https://www.carlosjramirez.com)
+
 Based on the [oTtomator Python agent](https://github.com/coleam00/ottomator-agents/tree/main/~sample-python-agent~) code from: [Cole Medin](https://www.youtube.com/@ColeMedin)
 
 The [GSAM](https://gsam-app.streamlit.app) Python FastAPI agent, is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library. It's compatible with the OTTomator Live Agent Studio.
 
 ## Overview
 
-This agent provides a foundation for building AI-powered agents that can:
+This AI-powered agent provides:
+
+- **Innovative App Ideas Generation**: Craft mind-blowing web/mobile app concepts emphasizing unique features, target audiences, and potential uses.
+- **Names Generation**: Propose catchy, creative names for software applications.
+- **PowerPoint Content Creation**: Draft content for presentation slides and suggest prompts for generating presentation images.
+- **App Description and Table Definitions**: Develop comprehensive application descriptions and detailed table definitions.
+- **CRUD JSON and Python Code Generation**: Produce generic CRUD editor configuration JSON and corresponding Python code using Langchain Tools for specified operations.
+
+It also:
+
 - Process natural language queries
 - Maintain conversation history
 - Integrate with external AI models
@@ -32,7 +42,7 @@ The agent comes in two variants:
 
 ## Core Components
 
-### 1. FastAPI Application (`gsam_ottomator_agent_app.py, gsam_supabase_agent.py and gsam_postgres_agent.py`)
+### 1. FastAPI Application (`gsam_ottomator_agent_app.py`)
 
 The main application is built using FastAPI, providing:
 
@@ -107,7 +117,7 @@ messages (
 
    #### Supabase Configuration
    Required environment variables in `.env` file (do not use quotes around values):
-   ```plaintext
+   ```env
    SUPABASE_URL=your-project-url
    SUPABASE_SERVICE_KEY=your-service-key
    API_BEARER_TOKEN=your-token-here
@@ -115,17 +125,18 @@ messages (
 
    #### PostgreSQL Configuration
    Required environment variables:
-   ```plaintext
+   ```env
    DATABASE_URL=postgresql://user:password@localhost:5432/dbname
    API_BEARER_TOKEN=your-chosen-token
    ```
 
    The DATABASE_URL format is:
-   ```
+   ```plaintext
    postgresql://[user]:[password]@[host]:[port]/[database_name]
+   ```
 
    #### LLM configurations
-   ```plaintext
+   ```env
    OPENROUTER_API_KEY=your-api-key-here
    OPENROUTER_MODEL_NAME=your-model-name-here
    ```

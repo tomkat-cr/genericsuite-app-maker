@@ -40,8 +40,6 @@ class GeneralLib:
             "model_config_par_frequency_penalty": 0.0,
             "model_config_par_presence_penalty": 0.0,
         }
-        log_debug(f"||| GeneralLib | params: {self.params}", debug=DEBUG)
-        log_debug(f"||| GeneralLib | session_state: {self.session_state}", debug=DEBUG)
 
     # Conversations database
 

@@ -10,7 +10,7 @@ AI tool to enhance the software development ideation and AI models, providers an
 
 ## The GSAM Python FastAPI agent
 
-The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the GSAM implementation compatible with the OTTomator Live Agent Studio. For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
+The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio(https://studio.ottomator.ai)]. For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
 
 ## Key Features
 
