@@ -3,7 +3,6 @@ GSAM Agent library
 """
 from __future__ import annotations as _annotations
 
-
 from typing import List, Any
 import os
 from dataclasses import dataclass
@@ -41,8 +40,9 @@ import nest_asyncio
 
 DEBUG = False
 MOCK_IMAGES = False
-MOCK_VIDEOS = True
+MOCK_VIDEOS = False
 
+# To fix the error "This event loop is already running" running the Pydantic AI LLM run
 nest_asyncio.apply()
 
 

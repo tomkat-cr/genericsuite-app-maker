@@ -1,16 +1,14 @@
 """
 GSAM Ottomator Agent
 """
-from typing import Annotated
-
 import os
 from dotenv import load_dotenv
 
 from pydantic import BaseModel
-from fastapi import Depends, HTTPException, Header, Request
+from fastapi import Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from lib.codegen_utilities import log_debug
+# from lib.codegen_utilities import log_debug
 
 from gsam_ottomator_agent.gsam_supabase_agent import (
     init_fastapi_app as init_fastapi_app_supabase,
@@ -78,7 +76,7 @@ async def gsam_postgres_agent_endpoint(
 ):
     if agent_db_type != "postgres":
         raise HTTPException(
-            status_code=400,
+            status_code=400,                
             detail="Invalid agent database type [GPAE-E010]"
         )
     result = await gsam_postgres_agent(agent_request, authenticated,
