@@ -3,14 +3,17 @@
 AI tool to enhance the software development ideation and AI models, providers and features selection and test.
 
 <!-- ![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png) -->
+![Gsam Cover image](./assets/gsam-cover.png)
 
 ## Introduction
 
 [GSAM](https://gsam-app.streamlit.app) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 
-## GSAM Python FastAPI agent
+## GSAM Agent
 
-The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio](https://studio.ottomator.ai). For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
+The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator Live Agent Studio](https://studio.ottomator.ai), bringing the best features from GSAM into a single tool with a Chatbot interface.
+
+For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
 
 ## Key Features
 
@@ -28,15 +31,18 @@ The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the impleme
 * Naming: generate name ideas for the App.
 * App Structure: generate the App description and database table structures.
 * App Presentation: generate PowerPoint presentation for the App, including the content, speaker notes, and image generation prompts.
+* [GSAM Agent](./gsam_ottomator_agent/README.md) implementation compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio](https://studio.ottomator.ai).
 
 ## Technology Used
 
 * Meta Llama models: Llama 3.2 3B, Llama 3.1 8B, 70B, and 405B
 * Together.ai
+* OpenRouter
 * Huggingface Inference API
 * Flux.1 image generation model
 * Rhymes Allegro video generation model
 * LlamaIndex framework.
+* Pydantic AI
 * StreamLit
 * MongoDB Atlas
 * Python 3.10
@@ -87,6 +93,8 @@ HUGGINGFACE_API_KEY=
 TOGETHER_AI_API_KEY=
 # AI/ML API
 AIMLAPI_API_KEY=
+# OpenRouter
+OPENROUTER_API_KEY=
 # Groq
 GROQ_API_KEY=
 # X AI
@@ -242,7 +250,7 @@ Video Gallery
 
 ## Context
 
-This project was developed as part of the [Llama Impact Hackathon](https://lablab.ai/event/llama-impact-hackathon) organized by [Lablab.ai](https://lablab.ai).
+This project was initially developed as part of the [Llama Impact Hackathon](https://lablab.ai/event/llama-impact-hackathon) organized by [Lablab.ai](https://lablab.ai) on 2024-11-08.
 
 ![Hackathon banner image](./assets/llama-impact-hackathon-official-banner.webp)
 
@@ -253,6 +261,10 @@ This project was developed as part of the [Llama Impact Hackathon](https://labla
 - Presentation document: [Llama Impact Hackathon - GSAM App Maker Presentation](https://storage.googleapis.com/lablab-static-eu/presentations/submissions/cm3c8x66j00003b720knfr48o/cm3c8x66j00003b720knfr48o-1731282858572_7hmmg0ucv.pdf)
 
 - Team: [The FynBots](https://lablab.ai/event/llama-impact-hackathon/the-fynbots)
+
+On 2025-02-29 the [GSAM Agent](./gsam_ottomator_agent/README.md) implementation compatible with the [oTTomator Live Agent Studio](https://studio.ottomator.ai) was developed as part of the Live Agent Studio Hackathon, organized by [OTTomator](https://ottomator.ai).
+
+![oTTomator Live Agent Studio hackathon banner image](./assets/live-agent-studio%20hackathon-2025-01-29.png)
 
 ## Contributors
 
