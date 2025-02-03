@@ -2,7 +2,8 @@
 
 AI tool to enhance the software development ideation and AI models, providers and features selection and test.
 
-![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png)
+<!-- ![Hackathon Cover image](./assets/llama-impact-hackathon-cover.png) -->
+![Gsam Cover image](./assets/gsam-cover.png)
 
 ## Introduction
 
@@ -10,7 +11,7 @@ AI tool to enhance the software development ideation and AI models, providers an
 
 ## GSAM Agent
 
-The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio](https://studio.ottomator.ai).
+The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator Live Agent Studio](https://studio.ottomator.ai), bringing the best features from GSAM into a single tool with a Chatbot interface.
 
 For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
 
