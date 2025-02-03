@@ -32,6 +32,8 @@ Fix the runtime error in the streamlit UI in production [GS-55].
 
 ### New
 Add the oTTomator Live Studio compatible GSAM Agent (as part of the oTTomator hackathon) [GS-166].
+Add OpenRouter support [GS-166].
+Add Pydantic AI support [GS-166].
 
 
 ## 0.3.0 (2025-01-25)
