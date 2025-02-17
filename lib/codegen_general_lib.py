@@ -33,13 +33,23 @@ class GeneralLib:
     """
     def __init__(self, params: dict, session_state: dict = None):
         self.params = dict(params)
-        self.session_state = session_state or {
-            "model_config_par_temperature": 0.5,
-            "model_config_par_max_tokens": 2048,
-            "model_config_par_top_p": 1.0,
-            "model_config_par_frequency_penalty": 0.0,
-            "model_config_par_presence_penalty": 0.0,
-        }
+        self.session_state = session_state
+        if not self.session_state:
+            self.session_state = {
+                "model_config_par_temperature": 0.5,
+                "model_config_par_max_tokens": 2048,
+                "model_config_par_top_p": 1.0,
+                "model_config_par_frequency_penalty": 0.0,
+                "model_config_par_presence_penalty": 0.0,
+            }
+            self.session_state["llm_provider"] = \
+                self.get_available_ai_providers("LLM_PROVIDERS")[0]
+            self.session_state["image_provider"] = \
+                self.get_available_ai_providers("TEXT_TO_IMAGE_PROVIDERS")[0]
+            self.session_state["video_provider"] = \
+                self.get_available_ai_providers("TEXT_TO_VIDEO_PROVIDERS")[0]
+        log_debug(f"GeneralLib | session_state: {self.session_state}",
+                  DEBUG)
 
     # Conversations database
 

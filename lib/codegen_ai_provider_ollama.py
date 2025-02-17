@@ -9,6 +9,7 @@ from ollama import Client
 from lib.codegen_utilities import (
     log_debug,
     get_default_resultset,
+    fix_ollama_url,
 )
 from lib.codegen_ai_abstracts import LlmProviderAbstract
 
@@ -53,12 +54,14 @@ class OllamaLlm(LlmProviderAbstract):
                   f"model_params: {model_params}", debug=DEBUG)
         if self.params.get("ollama_base_url"):
             client_params["base_url"] = self.params["ollama_base_url"]
+        elif os.environ.get("OLLAMA_BASE_URL"):
+            client_params["base_url"] = os.environ.get("OLLAMA_BASE_URL")
         if client_params.get("base_url"):
+            base_url = fix_ollama_url(client_params.get("base_url"), None)
             log_debug(
-                "Using ollama client with base_url:" +
-                f' {client_params.get("base_url")}', debug=DEBUG)
-            self.log_debug("", debug=DEBUG)
-            client = Client(host=client_params.get("base_url"))
+                ">> Using ollama client with base_url:" +
+                f' {base_url}', debug=DEBUG)
+            client = Client(host=base_url)
             response_raw = client.chat(**model_params)
         else:
             response_raw = ollama.chat(**model_params)

@@ -48,7 +48,15 @@ install() {
             groq \
             together \
             llama-index;
-        pip freeze > requirements.txt;
+        then
+            echo "Error installing dependencies"
+            exit 1
+        fi
+        if ! pip freeze > requirements.txt;
+        then
+            echo "Error saving requirements"
+            exit 1
+        fi
     fi
 }
 

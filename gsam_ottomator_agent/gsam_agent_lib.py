@@ -9,15 +9,7 @@ from dataclasses import dataclass
 from dotenv import load_dotenv
 
 from pydantic_ai import (
-    Agent,
     RunContext
-)
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.messages import (
-    ModelRequest,
-    ModelResponse,
-    UserPromptPart,
-    TextPart
 )
 import logfire
 from fastapi import HTTPException
@@ -33,23 +25,15 @@ from lib.codegen_app_ideation_lib import (
     get_ideation_from_prompt_config,
     get_buttons_config_for_prompt,
 )
-
-# !pip install nest_asyncio
-import nest_asyncio
-
+from lib.codegen_fastapi import headers_to_dict
+from lib.codegen_pydantic_ai import PydanticAiLib
 
 DEBUG = False
+
 MOCK_IMAGES = False
 MOCK_VIDEOS = False
 
-# To fix the error "This event loop is already running" running the Pydantic AI LLM run
-nest_asyncio.apply()
-
-
-@dataclass
-class PydanticAIDeps:
-    supabase: Client
-    openai_client: AsyncOpenAI
+SIMPLE_PAI_AGENT = os.environ.get("SIMPLE_PAI_AGENT", "false") == "true"
 
 
 class AppContext:
@@ -76,21 +60,6 @@ cgsl = GeneralLib(app_config)
 
 app_context = AppContext({})
 
-model_params = {}
-default_llm_provider = cgsl.get_par_value("DEFAULT_LLM_PROVIDER", "openai")
-if default_llm_provider == "openrouter":
-    model_name = cgsl.get_par_value("OPENROUTER_MODEL_NAME")
-    model_params["api_key"] = cgsl.get_par_value("OPENROUTER_API_KEY")
-    model_params["base_url"] = "https://openrouter.ai/api/v1"
-else:
-    model_name = cgsl.get_par_value("OPENAI_MODEL_NAME", "gpt-4o-mini")
-    model_params["api_key"] = cgsl.get_par_value("OPENAI_API_KEY")
-
-model = OpenAIModel(model_name, **model_params)
-
-# openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-openai_client = AsyncOpenAI(**model_params)
-
 supabase: Client = Client(
     os.getenv("SUPABASE_URL"),
     os.getenv("SUPABASE_SERVICE_KEY")
@@ -100,70 +69,62 @@ logfire.configure(send_to_logfire="if-token-present")
 
 system_prompt = cgsl.get_par_value("AGENT_SYSTEM_PROMPT")
 
-# https://ai.pydantic.dev/api/agent/
-pydantic_ai_agent = Agent(
-    model, system_prompt=system_prompt, deps_type=PydanticAIDeps, retries=2
-)
+if SIMPLE_PAI_AGENT:
+    from pydantic_ai.models.openai import OpenAIModel
+    from pydantic_ai import Agent
 
+    @dataclass
+    class PydanticAIDeps:
+        supabase: Client
+        openai_client: AsyncOpenAI
 
-# Agent utilities
+    model_params = {}
+    default_llm_provider = cgsl.get_par_or_env("DEFAULT_LLM_PROVIDER",
+                                               "openrouter")
+    if default_llm_provider == "openrouter":
+        model_name = cgsl.get_par_or_env(
+            "OPENROUTER_MODEL_NAME",
+            "google/gemini-2.0-flash-exp:free")
+        model_params["api_key"] = cgsl.get_par_or_env("OPENROUTER_API_KEY")
+        model_params["base_url"] = "https://openrouter.ai/api/v1"
+    else:
+        model_name = cgsl.get_par_or_env("OPENAI_MODEL_NAME", "gpt-4o-mini")
+        model_params["api_key"] = cgsl.get_par_or_env("OPENAI_API_KEY")
 
+    model = OpenAIModel(model_name, **model_params)
 
-def headers_to_dict(headers: list[tuple(bytes, bytes)]
-                    ) -> dict:
-    """
-    Convert a FastAPI headers object to a dictionary.
-    """
-    return {k.decode("latin-1"): v.decode("latin-1") for k, v in headers}
+    # openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    openai_client = AsyncOpenAI(**model_params)
 
-
-def convert_messages(conversation_history: list) -> list:
-    """
-    Convert a list of messages to a list of dictionaries.
-    """
-    # Convert conversation history to format expected by agent
-    log_debug(f">>> conversation_history:\n{conversation_history}", DEBUG)
-    messages = []
-    for msg in conversation_history:
-        msg_type = msg["role"]
-        msg_content = msg["content"]
-        result = ModelRequest(parts=[UserPromptPart(content=msg_content)]) \
-            if msg_type == "human" else \
-            ModelResponse(parts=[TextPart(content=msg_content)])
-        messages.append(result)
-    return messages
-
-
-# Agent entry point
-
-
-def run_agent(user_input: str, messages: list, http_request: dict):
-    """
-    Run the agent with streaming text for the user_input prompt,
-    while maintaining the entire conversation in `st.session_state.messages`.
-    """
-    # Set app context
-    app_context.set_params({
-        "http_request": http_request
-    })
-
-    # Prepare dependencies
-    deps = PydanticAIDeps(
-        supabase=supabase,
-        openai_client=openai_client
+    # https://ai.pydantic.dev/api/agent/
+    pydantic_ai_agent = Agent(
+        model, system_prompt=system_prompt, deps_type=PydanticAIDeps, retries=2
     )
 
-    # Prepare messages
-    messages = convert_messages(messages)
-
-    # Run the agent in a stream
-    result = pydantic_ai_agent.run_sync(
-        user_input,
-        deps=deps,
-        message_history=messages,
+    log_debug(
+        ">>> SIMPLE_PAI_AGENT / PydanticAiLib.get_pydantic_ai_agent:"
+        f"\n | system_prompt: {system_prompt}"
+        f"\n | model_name: {model_name}"
+        f"\n | model_params: {model_params}"
+        f"\n | model: {model}"
+        f"\n | pydantic_ai_agent: {pydantic_ai_agent}",
+        debug=True
     )
-    log_debug(f">>> run_agent: {result.data}")
-    return result.data
+else:
+    pydantic_ai_lib = PydanticAiLib(
+        {},
+        getenv_func=cgsl.get_par_or_env,
+    )
+    pydantic_ai_agent = pydantic_ai_lib.get_pydantic_ai_agent(system_prompt)
+
+    @dataclass
+    class PydanticAIDeps(pydantic_ai_lib.get_pydantic_ai_deps_class()):
+        supabase: Client
+
+    pydantic_ai_lib.set_pydantic_ai_deps_class(PydanticAIDeps)
+    pydantic_ai_deps = pydantic_ai_lib.get_pydantic_ai_deps()
+    pydantic_ai_deps["supabase"] = supabase
+    pydantic_ai_lib.set_pydantic_ai_deps(pydantic_ai_deps)
 
 
 # GenericSuite tools
@@ -504,3 +465,44 @@ async def get_page_content(ctx: RunContext[PydanticAIDeps], url: str) -> str:
     except Exception as e:
         print(f"Error retrieving page content: {e}")
         return f"Error retrieving page content: {str(e)}"
+
+
+# Agent entry point
+
+
+def run_agent(user_input: str, messages: list, http_request: dict):
+    """
+    Run the agent with streaming text for the user_input prompt,
+    while maintaining the entire conversation in `st.session_state.messages`.
+    """
+    # Set app context
+    app_context.set_params({
+        "http_request": http_request
+    })
+
+    if SIMPLE_PAI_AGENT:
+        # Prepare dependencies
+        deps = PydanticAIDeps(
+            supabase=supabase,
+            openai_client=openai_client
+        )
+
+        # Prepare messages
+        pydantic_ai_lib = PydanticAiLib({})
+        messages = pydantic_ai_lib.convert_messages(messages)
+
+        # Run the agent without a stream
+        result = pydantic_ai_agent.run_sync(
+            user_input,
+            deps=deps,
+            message_history=messages,
+        )
+        log_debug(f">>> run_agent: {result.data}")
+    else:
+        pydantic_ai_lib.set_pydantic_ai_agent(pydantic_ai_agent)
+        result = pydantic_ai_lib.run_agent(
+            user_input,
+            messages=messages,
+        )
+
+    return result

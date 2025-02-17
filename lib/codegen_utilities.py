@@ -163,3 +163,14 @@ def get_app_config(config_file_path: str = None):
             os.path.dirname(os.path.abspath(__file__)),
             "../config/app_config.json")
     return read_config_file(config_file_path)
+
+
+def fix_ollama_url(url, suffix="/v1"):
+    """
+    Fixes the ollama url
+    """
+    if not url.startswith("http"):
+        url = "http://" + url
+    if suffix and not url.endswith(suffix):
+        url += suffix
+    return url

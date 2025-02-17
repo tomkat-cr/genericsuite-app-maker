@@ -17,21 +17,28 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Breaks
 
 
-## 0.5.0 (2025-02-02)
+## 0.5.0 (2025-02-17)
 ---
 
 ### New
-Add image and video generation capabilities to the oTTomator Live Studio compatible GSAM Agent [GS-166].
+Add image and video generation capabilities to the Live Agent Studio-compatible GSAM Agent [GS-166].
+Add "new_prompt" button and action to empty the question input field [GS-55].
+Add the generic model use for the gsam_agent_lib [GS-55].
+
+### Changes
+Ollama enabled [GS-55].
+Control de generic model use for the gsam_agent_lib with the SIMPLE_PAI_AGENT constant. When True, only OpenAI or Openrouter providers are available; False (by default) offers all the providers in the "app_config.json" file [GS-55].
 
 ### Fixes
 Fix the runtime error in the streamlit UI in production [GS-55].
+Fix Ollama runtime fixed and all configurations goes to the "options" sub-item [GS-55].
 
 
 ## 0.4.0 (2025-01-29)
 ---
 
 ### New
-Add the oTTomator Live Studio compatible GSAM Agent (as part of the oTTomator hackathon) [GS-166].
+Add the Live Agent Studio-compatible GSAM Agent (as part of the oTTomator hackathon) [GS-166].
 Add OpenRouter support [GS-166].
 Add Pydantic AI support [GS-166].
 
