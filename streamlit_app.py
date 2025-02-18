@@ -255,7 +255,7 @@ def add_title():
             st.title(cgsl.get_title())
         with col[1]:
             sub_col = st.columns(
-                2, gap="small",
+                3, gap="small",
                 vertical_alignment="bottom")
             col_index = 0
             if cgsl.get_par_value("VIDEO_GENERATION_ENABLED", True):
@@ -271,6 +271,13 @@ def add_title():
                         "Image Gallery",
                         on_click=cgsl.set_query_param,
                         args=("page", "image_gallery"))
+
+            col_index += 1
+            with sub_col[col_index]:
+                st.button(
+                    "New Prompt",
+                    key="new_prompt",
+                )
 
 
 def add_suggestions():
@@ -570,6 +577,7 @@ def add_check_buttons_pushed(
             break
 
     # Perform data management operations
+
     if st.session_state.get("import_data"):
         cgsl.import_data(data_management_container)
 
@@ -587,6 +595,12 @@ def add_check_buttons_pushed(
     cgsl.process_no_form_buttons(
         "ideation_from_prompt", question,
         show_ideation_from_prompt, process_ideation_form)
+
+    # New prompt
+    if st.session_state.get("new_prompt"):
+        question = ""
+        st.session_state["question"] = ""
+        st.rerun()
 
 
 def add_footer():

@@ -11,9 +11,9 @@ AI tool to enhance the software development ideation and AI models, providers an
 
 ## GSAM Agent
 
-The [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator Live Agent Studio](https://studio.ottomator.ai), bringing the best features from GSAM into a single tool with a Chatbot interface.
+The [GSAM Python FastAPI Agent](./gsam_ottomator_agent/README.md) is the implementation compatible with the [OTTomator Live Agent Studio](https://studio.ottomator.ai), bringing the best features from GSAM into a single tool with a Chatbot interface.
 
-For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent/README.md) documentation.
+For more information, see the [GSAM Python FastAPI Agent](./gsam_ottomator_agent/README.md) documentation.
 
 ## Key Features
 
@@ -46,7 +46,6 @@ For more information, see the [GSAM Python FastAPI agent](./gsam_ottomator_agent
 * StreamLit
 * MongoDB Atlas
 * Python 3.10
-
 
 ## Getting Started
 
@@ -126,6 +125,10 @@ Replace the `..._API_KEY` access tokens with your Together.ai, OpenAI, Huggingfa
 The API Keys specified in the `.env` file will enable the the corresponding LLMs, image generators, and video generators to be available in the Model Selection panel.
 
 To use a MongoDB database, comment out `DB_TYPE=json`, uncomment `# DB_TYPE=mongodb`, and replace `YOUR_MONGODB_URI`, `YOUR_MONGODB_DB_NAME`, and `YOUR_MONGODB_COLLECTION_NAME` with your actual MongoDB URI, database name, and collection name, respectively.
+
+### Implement the GSAM Agent
+
+For more information about the GSAM Agent implementation, check the [GSAM Python FastAPI Agent](./gsam_ottomator_agent/README.md) documentation.
 
 ### Run the Application
 

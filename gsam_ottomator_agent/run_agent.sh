@@ -9,15 +9,22 @@ cd "`dirname "$0"`"
 SCRIPTS_DIR="`pwd`"
 cd "${REPO_BASEDIR}"
 
-set -o allexport
-if [ ! -f .env ]
-then
+ENV_FILE="${SCRIPTS_DIR}/.env"
+if [ ! -f "${ENV_FILE}" ]; then
+    ENV_FILE="${REPO_BASEDIR}/.env"
+fi
+if [ ! -f "${ENV_FILE}" ]; then
+    ENV_FILE="${SCRIPTS_DIR}/../.env"
+fi
+if [ ! -f "${ENV_FILE}" ]; then
     echo "ERROR: .env file not found"
     exit 1
 fi
-if ! source .env
+
+set -o allexport
+if ! source "${ENV_FILE}"
 then
-    if ! . .env
+    if ! . "${ENV_FILE}"
     then
         echo "ERROR: .env file could not be sourced"
         exit 1
@@ -151,7 +158,7 @@ if [ "$ACTION" = "run" ]; then
     echo ""
     echo "Run the container"
     echo ""
-    docker run -v "$(pwd)/..":/app -d --name gsam-python-agent -p 8001:8001 --env-file .env gsam-python-agent
+    docker run -v "$(pwd)/..":/app -d --name gsam-python-agent -p 8001:8001 --env-file "${ENV_FILE}" gsam-python-agent
     docker ps
     docker logs -f gsam-python-agent
 fi

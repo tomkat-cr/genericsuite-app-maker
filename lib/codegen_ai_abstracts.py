@@ -391,12 +391,15 @@ class LlmProviderAbstract:
             model_params["api_key"] = params.get("api_key")
             model_params["base_url"] = params.get("base_url")
             model_params["stop"] = params.get("stop")
-        if params.get('model', params.get('model_name')) == 'ollama':
-            if model_params.get('temperature'):
-                model_params['options'] = {
-                    "temperature": model_params['temperature']
-                }
-                del model_params['temperature']
+        # if params.get('model', params.get('model_name')) == 'ollama':
+        if self.provider == 'ollama':
+            model_params['options'] = {}
+            for key in ["temperature", "top_p", "top_k", "frequency_penalty",
+                        "presence_penalty", "max_tokens", "stream", "n",
+                        "logprobs", "echo", "stop", "logit_bias", "user"]:
+                if model_params.get(key):
+                    model_params['options'][key] = model_params[key]
+                    del model_params[key]
         return model_params
 
     def get_client_args(self, additional_params: dict = None):

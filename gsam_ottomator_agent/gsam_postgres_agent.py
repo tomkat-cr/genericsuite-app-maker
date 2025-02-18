@@ -152,9 +152,7 @@ async def gsam_postgres_agent(
             content=request.query
         )
         """
-        TODO:
-        This is where you insert the custom logic to get the response from
-        your agent.
+        Custom logic to get the response from the agent.
         Your agent can also insert more records into the database to
         communicate actions/status as it is handling the user's
         question/request.
