@@ -21,7 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ## [Unreleased] - 2025-02-27 // 2026-04-19
 
 ### Added
-- AGENTS.md and CLAUDE.md files to provide context and instructions to AI agents [GS-303].
+- AGENTS.md, GEMINI.md, and CLAUDE.md files to provide context and instructions to AI Coding Assistants [GS-303].
 - Add SAST testing [GS-315].
 
 ### Changed
