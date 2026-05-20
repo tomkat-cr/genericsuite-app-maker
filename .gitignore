@@ -162,4 +162,11 @@ cython_debug/
 #.idea/
 
 # Claude Code
-.claude/settings.local.json
+/settings.local.json
+
+# AI Agents
+.claude
+.agents
+.codex
+.cursor
+.gemini
