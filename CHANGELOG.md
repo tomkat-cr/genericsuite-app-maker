@@ -18,14 +18,14 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Security
 
 
-## [Unreleased] - 2025-02-27 // 2026-04-19
+## [0.6.0] - 2026-07-15
 
 ### Added
 - AGENTS.md, GEMINI.md, and CLAUDE.md files to provide context and instructions to AI Coding Assistants [GS-303].
 - Add SAST testing [GS-315].
 
 ### Changed
-README typos and wording [GS-128].
+- README typos and wording [GS-128].
 
 
 ## 0.5.0 (2025-02-17)
