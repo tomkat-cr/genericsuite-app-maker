@@ -27,6 +27,9 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Changed
 - README typos and wording [GS-128].
 
+### Security
+- Update requirements.txt to use the latest version of the dependencies [GS-219].
+
 
 ## 0.5.0 (2025-02-17)
 
