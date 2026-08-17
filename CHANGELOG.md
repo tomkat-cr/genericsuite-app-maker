@@ -23,6 +23,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 ### Added
 - AGENTS.md, GEMINI.md, and CLAUDE.md files to provide context and instructions to AI Coding Assistants [GS-303].
 - Add SAST testing [GS-315].
+- "upgrade" and "update" targets to Makefile [GS-219].
 
 ### Changed
 - README typos and wording [GS-128].

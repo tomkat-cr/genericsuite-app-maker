@@ -12,6 +12,11 @@ create_venv:
 install: 
 	sh scripts/run_app.sh install
 
+upgrade:
+	sh scripts/run_app.sh upgrade
+
+update: upgrade
+
 requirements:
 	sh scripts/run_app.sh requirements
 
