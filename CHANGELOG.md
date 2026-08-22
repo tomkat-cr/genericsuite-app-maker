@@ -30,6 +30,11 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a Ch
 
 ### Security
 - Update requirements.txt to use the latest version of the dependencies [GS-219].
+- Migrate to Python 3.14 [GS-337]
+- "gsam_ottomator_agent/base_python_docker/Dockerfile" uses Python 3.14 [GS-337]
+
+### Removed
+- Regenerated lockfile drops packages that weren't there before at all: cohere, mistralai, gotrue, supafunc, huggingface-hub, pypdf, beautifulsoup4/soupsieve, llama-index-readers-file, llama-cloud, and several other llama-index-*-openai integration packages [GS-219].
 
 
 ## 0.5.0 (2025-02-17)
