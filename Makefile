@@ -12,6 +12,11 @@ create_venv:
 install: 
 	sh scripts/run_app.sh install
 
+upgrade:
+	sh scripts/run_app.sh upgrade
+
+update: upgrade
+
 requirements:
 	sh scripts/run_app.sh requirements
 
@@ -43,3 +48,8 @@ qa: lint types tests format_check pycodestyle
 # Application Specific Commands
 run:
 	sh scripts/run_app.sh run
+
+sast-test:
+	snyk auth
+	snyk code test --severity-threshold=high --all-projects .
+	snyk test --severity-threshold=high --all-projects .

@@ -7,7 +7,7 @@ AI tool to enhance the software development ideation and AI models, providers an
 
 ## Introduction
 
-[GSAM](https://gsam-app.streamlit.app) is a tool to help on the software development process for any Application. It allows to generate code, images, video or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
+The GenericSuite App Maker ([GSAM](https://gsam-app.streamlit.app)) is the AI tool to enhance the software development ideation and test AI models, LLM providers and its features. It also allows to generate descriptions, database structures, images, videos or answers from a text prompt, and kick start code to be used with the [GenericSuite](https://genericsuite.carlosjramirez.com) library.
 
 ## GSAM Agent
 
@@ -17,7 +17,7 @@ For more information, see the [GSAM Python FastAPI Agent](./gsam_ottomator_agent
 
 ## Key Features
 
-* Answer question with LLM inference, using Meta Llama models, Together.ai, HuggingFace, Groq, Ollama, Nvidia NIMs, and OpenAI.
+* Answer question with LLM inference, using OpenAI, Meta Llama, HuggingFace, Groq, Ollama, Together.ai, OpenRouter, AI/ML API, xAI Grok, and Nvidia NIMs.
 * Image Generation: using HuggingFace and the Flux or OpenAI Dall-E models.
 * Video Generation: using Rhymes AI Allegro model.
 * Galleries to show the generated images and videos.
@@ -31,7 +31,7 @@ For more information, see the [GSAM Python FastAPI Agent](./gsam_ottomator_agent
 * Naming: generate name ideas for the App.
 * App Structure: generate the App description and database table structures.
 * App Presentation: generate PowerPoint presentation for the App, including the content, speaker notes, and image generation prompts.
-* [GSAM Agent](./gsam_ottomator_agent/README.md) implementation compatible with the [OTTomator](https://ottomator.ai) [Live Agent Studio](https://studio.ottomator.ai).
+* [GSAM Agent](./gsam_ottomator_agent/README.md) implementation compatible with [n8n](https://n8n.io) and the [OTTomator](https://ottomator.ai) [Live Agent Studio](https://studio.ottomator.ai).
 
 ## Technology Used
 

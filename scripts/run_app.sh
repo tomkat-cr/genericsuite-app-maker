@@ -60,6 +60,12 @@ install() {
     fi
 }
 
+upgrade() {
+    rm -rf venv;
+    rm -rf requirements.txt;
+    install
+}
+
 requirements() {
     install
 }
@@ -74,6 +80,12 @@ ACTION=$1
 case $ACTION in
     "install")
         install
+        ;;
+    "update")
+        upgrade
+        ;;
+    "upgrade")
+        upgrade
         ;;
     "requirements")
         requirements
